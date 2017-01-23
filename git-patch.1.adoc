@@ -43,8 +43,8 @@ leave the rejected hunks in corresponding *.rej files.
     blobs available locally, possibly leaving the conflict markers in the files
     in the working tree for the user to resolve. This option implies the --index
     option, and is incompatible with the --reject and the --cached options.
-    This flag is passed to the git am (see git-am(1)) program that applies the
-    patch.
+    This flag is passed to the git am (see git-am(1)) and git apply (see
+    git-apply(1)) programs that apply the patch.
 
 -v, --verbose::
     Report progress to stderr. By default, only a message about the current

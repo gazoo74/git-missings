@@ -37,6 +37,7 @@ EOF
 }
 
 AMOPTS=
+APPLYOPTS=
 COMMITOPTS=
 REJECT="true"
 VERBOSE="false"
@@ -67,8 +68,10 @@ fi
 
 if $REJECT; then
 	AMOPTS+=" --reject"
+	APPLYOPTS+=" --reject --index"
 else
 	AMOPTS+=" --3way"
+	APPLYOPTS+=" --3way"
 fi
 
 for patch in "$@"; do
@@ -87,7 +90,7 @@ for patch in "$@"; do
 	# Try to apply patch
 	msg="$(sanitized_commit_msg $patch)"
 	echo "Applying: $msg" >&2
-	if git apply --reject --index "$patch"; then
+	if git apply $APPLYOPTS "$patch"; then
 		git commit $COMMITOPTS -m "$msg"
 		continue
 	fi
