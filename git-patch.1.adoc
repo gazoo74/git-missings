@@ -12,7 +12,7 @@ git-patch - Apply a series of patches
 
 == SYNOPSIS
 
-*git-patch* [--signoff] [--3way] [--verbose] [(<mbox> | <unified>)...]
+*git-patch* [--signoff] [--3way] [--verbose | --quiet] [(<mbox> | <unified>)...]
 
 == DESCRIPTION
 
@@ -50,6 +50,9 @@ leave the rejected hunks in corresponding *.rej files.
     Report progress to stderr. By default, only a message about the current
     patch being applied will be printed. This option will cause additional
     information to be reported.
+
+-q, --quiet::
+    Be quiet. Only print error messages.
 
 == HOOKS
 

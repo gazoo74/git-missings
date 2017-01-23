@@ -33,6 +33,7 @@ usage: git patch [<options>] [(<mbox> | <unified>)...]
     -s, --signoff         add a Signed-off-by line to the commit message
     -3, --3way            attempt three-way merge if a patch does not apply
     -v, --verbose         be verbose
+    -q, --quiet           be quiet
 EOF
 }
 
@@ -41,6 +42,7 @@ APPLYOPTS=
 COMMITOPTS=
 REJECT="true"
 VERBOSE="false"
+QUIET="false"
 while [ $# -ne 0 ]; do
 	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 		usage
@@ -52,6 +54,10 @@ while [ $# -ne 0 ]; do
 		REJECT="false"
 	elif [ "$1" = "-v" ] || [ "$1" = "--verbose" ]; then
 		VERBOSE="true"
+		QUIET="false"
+	elif [ "$1" = "-q" ] || [ "$1" = "--quiet" ]; then
+		VERBOSE="false"
+		QUIET="true"
 	elif [ "$1" = "--" ]; then
 		shift
 		break
@@ -78,6 +84,10 @@ if $VERBOSE; then
 	APPLYOPTS+=" --verbose"
 fi
 
+if $QUIET; then
+	AMOPTS+=" --quiet"
+fi
+
 for patch in "$@"; do
 	# Try to apply mailbox first
 	if git am $AMOPTS "$patch"; then
@@ -93,7 +103,7 @@ for patch in "$@"; do
 
 	# Try to apply patch
 	msg="$(sanitized_commit_msg $patch)"
-	echo "Applying: $msg" >&2
+	$QUIET || echo "Applying: $msg" >&2
 	if git apply $APPLYOPTS "$patch"; then
 		git commit $COMMITOPTS -m "$msg"
 		continue
