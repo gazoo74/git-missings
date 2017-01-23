@@ -56,7 +56,7 @@ leave the rejected hunks in corresponding *.rej files.
 
 == HOOKS
 
-This command run either *am* or, *apply* *add* and *commit*.
+This command run either *am* or, *apply* and *commit*.
 
 == BUGS
 
