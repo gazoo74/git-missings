@@ -13,6 +13,16 @@ all: git-patch.1.gz
 
 man: git-patch.1.gz
 
+alias:
+	git config --global alias.last 'log -1 HEAD'
+	git config --global alias.unstage 'reset HEAD --'
+	git config --global alias.cached 'diff --cached'
+	git config --global alias.fixup '!f() { git commit --fixup=$${1:-HEAD}; }; f'
+	git config --global alias.autosquash 'rebase -i --autosquash --autostash'
+	git config --global alias.upstream 'rev-parse --abbrev-ref --symbolic-full-name @{u}'
+	git config --global alias.graph 'log --graph --oneline --decorate'
+	git config --global alias.ahead '!f() { br="$$(git upstream)"; git graph $${br:+$$br..}$${1:-HEAD}; }; f'
+
 install:
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -m 755 git-patch $(DESTDIR)$(PREFIX)/bin
