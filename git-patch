@@ -31,12 +31,14 @@ usage() {
 usage: git patch [<options>] [(<mbox> | <unified>)...]
 
     -s, --signoff         add a Signed-off-by line to the commit message
+    -3, --3way            attempt three-way merge if a patch does not apply
     -v, --verbose         be verbose
 EOF
 }
 
 AMOPTS=
 COMMITOPTS=
+REJECT="true"
 VERBOSE="false"
 while [ $# -ne 0 ]; do
 	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
@@ -61,6 +63,12 @@ done
 # Make sure there is no apply-mbox in progress
 if [ -d .git/rebase-apply ]; then
 	fatal "previous rebase directory $dir still exists but patch given."
+fi
+
+if $REJECT; then
+	AMOPTS+=" --reject"
+else
+	AMOPTS+=" --3way"
 fi
 
 for patch in "$@"; do

@@ -12,7 +12,7 @@ git-patch - Apply a series of patches
 
 == SYNOPSIS
 
-*git-patch* [--signoff] [--verbose] [(<mbox> | <unified>)...]
+*git-patch* [--signoff] [--3way] [--verbose] [(<mbox> | <unified>)...]
 
 == DESCRIPTION
 
@@ -36,6 +36,15 @@ leave the rejected hunks in corresponding *.rej files.
     information.
     This flag is passed to the git am (see git-am(1)) and git commit (see
     git-commit(1)) programs that apply and commit the patch.
+
+-3, --3way::
+    When the patch does not apply cleanly, fall back on 3-way merge if the patch
+    records the identity of blobs it is supposed to apply to, and we have those
+    blobs available locally, possibly leaving the conflict markers in the files
+    in the working tree for the user to resolve. This option implies the --index
+    option, and is incompatible with the --reject and the --cached options.
+    This flag is passed to the git am (see git-am(1)) program that applies the
+    patch.
 
 -v, --verbose::
     Report progress to stderr. By default, only a message about the current
