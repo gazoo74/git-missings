@@ -74,6 +74,10 @@ else
 	APPLYOPTS+=" --3way"
 fi
 
+if $VERBOSE; then
+	APPLYOPTS+=" --verbose"
+fi
+
 for patch in "$@"; do
 	# Try to apply mailbox first
 	if git am $AMOPTS "$patch"; then
