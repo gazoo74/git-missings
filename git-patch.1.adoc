@@ -12,7 +12,7 @@ git-patch - Apply a series of patches
 
 == SYNOPSIS
 
-*git-patch* [--verbose] [(<mbox> | <unified>)...]
+*git-patch* [--signoff] [--verbose] [(<mbox> | <unified>)...]
 
 == DESCRIPTION
 
@@ -29,6 +29,13 @@ leave the rejected hunks in corresponding *.rej files.
 (<mbox>|<unified>)...::
     The list of mailbox or unified files to read patches from. If you do not
     supply this argument, the command reads from the standard input.
+
+-s, --signoff::
+    Add a Signed-off-by: line to the commit message, using the committer
+    identity of yourself. See the signoff option in git-commit(1) for more
+    information.
+    This flag is passed to the git am (see git-am(1)) program that applies the
+    patch.
 
 -v, --verbose::
     Report progress to stderr. By default, only a message about the current

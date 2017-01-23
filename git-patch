@@ -30,15 +30,19 @@ usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
 
+    -s, --signoff         add a Signed-off-by line to the commit message
     -v, --verbose         be verbose
 EOF
 }
 
+AMOPTS=
 VERBOSE="false"
 while [ $# -ne 0 ]; do
 	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 		usage
 		exit 0
+	elif [ "$1" = "-s" ] || [ "$1" = "--signoff" ]; then
+		AMOPTS+=" $1"
 	elif [ "$1" = "-v" ] || [ "$1" = "--verbose" ]; then
 		VERBOSE="true"
 	elif [ "$1" = "--" ]; then
@@ -57,7 +61,7 @@ fi
 
 for patch in "$@"; do
 	# Try to apply mailbox first
-	if git am "$patch"; then
+	if git am $AMOPTS "$patch"; then
 		continue
 	fi
 
