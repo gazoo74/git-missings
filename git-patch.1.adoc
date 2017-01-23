@@ -1,0 +1,60 @@
+= git-patch(1)
+:doctype: manpage
+:author: Gaël PORTAY
+:email: gael.portay@savoirfairelinux.com
+:lang: en
+:man manual: The Missing Git Commands Manual
+:man source: The Missing Git Commands Project
+
+== NAME
+
+git-patch - Apply a series of patches
+
+== SYNOPSIS
+
+*git-patch* [--verbose] [(<mbox> | <unified>)...]
+
+== DESCRIPTION
+
+Reads the supplied mailbox or unified output (i.e. "a patch") and applies it to
+files.
+
+When a patch is supplied, this command applies the patch and creates a commit.
+
+When git apply fails, it apply the parts of the patch that are applicable, and
+leave the rejected hunks in corresponding *.rej files.
+
+== OPTIONS
+
+(<mbox>|<unified>)...::
+    The list of mailbox or unified files to read patches from. If you do not
+    supply this argument, the command reads from the standard input.
+
+-v, --verbose::
+    Report progress to stderr. By default, only a message about the current
+    patch being applied will be printed. This option will cause additional
+    information to be reported.
+
+== HOOKS
+
+This command run either *am* or, *apply* *add* and *commit*.
+
+== BUGS
+
+Report bugs at *https://github.com/gazoo74/git-patch/issues*
+
+== AUTHOR
+
+Written by Gaël PORTAY *gael.portay@savoirfairelinux.com*
+
+== COPYRIGHT
+
+Copyright (c) 2017 Gaël PORTAY
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3.
+
+== SEE ALSO
+
+git-am(1), git-apply(5)

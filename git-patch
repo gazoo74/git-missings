@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# Copyright (c) 2017 Gaël PORTAY <gael.portay@savoirfairelinux.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+#
+
+set -e
+
+log() {
+	! $VERBOSE || echo "$*" >&2
+}
+
+fatal() {
+	echo "fatal: $*" >&2
+	exit 1
+}
+
+sanitized_commit_msg() {
+	echo "$*" | \
+	sed -e 's,^.*/,,' \
+	    -e 's,^[0-9]*[_-],,' \
+	    -e 's,\.patch,,' \
+	    -e 's,[_-], ,g'
+}
+
+usage() {
+	cat <<EOF
+usage: git patch [<options>] [(<mbox> | <unified>)...]
+
+    -v, --verbose         be verbose
+EOF
+}
+
+VERBOSE="false"
+while [ $# -ne 0 ]; do
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		usage
+		exit 0
+	elif [ "$1" = "-v" ] || [ "$1" = "--verbose" ]; then
+		VERBOSE="true"
+	elif [ "$1" = "--" ]; then
+		shift
+		break
+	else
+		break
+	fi
+	shift
+done
+
+# Make sure there is no apply-mbox in progress
+if [ -d .git/rebase-apply ]; then
+	fatal "previous rebase directory $dir still exists but patch given."
+fi
+
+for patch in "$@"; do
+	# Try to apply mailbox first
+	if git am "$patch"; then
+		continue
+	fi
+
+	# Applying mailbox failed
+	# Make sure there is no apply-mbox in progress
+	if [ -d .git/rebase-apply ]; then
+		log "Abort: \"$patch\""
+		git am --abort
+	fi
+
+	# Try to apply patch
+	msg="$(sanitized_commit_msg $patch)"
+	echo "Applying: $msg" >&2
+	if git apply --reject --index "$patch"; then
+		git commit -m "$msg"
+		continue
+	fi
+
+	# Neither am nor apply succeed
+	exit 1
+done
