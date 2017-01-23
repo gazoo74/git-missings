@@ -26,9 +26,44 @@ sanitized_commit_msg() {
 	    -e 's,[_-], ,g'
 }
 
+patch() {
+	# Try to apply mailbox first
+	if git am $AMOPTS "$1"; then
+		return
+	fi
+
+	# Applying mailbox failed
+	# Make sure there is no apply-mbox in progress
+	if [ -d .git/rebase-apply ]; then
+		log "Abort: \"$1\""
+		git am --abort
+	fi
+
+	# Try to apply patch
+	msg="$(sanitized_commit_msg "$1")"
+	$QUIET || echo "Applying: $msg" >&2
+	if git apply $APPLYOPTS "$1"; then
+		git commit $COMMITOPTS -m "$msg"
+		return
+	fi
+
+	# Neither am nor apply succeed
+	cp "$1" .git/patch-apply/patch
+	echo "$msg" >.git/patch-apply/msg
+	echo "$next" >.git/patch-apply/next
+	cat <<EOF
+The copy of the patch that failed is found in: .git/patch-apply/patch"
+When you have resolved this problem, run "git patch --continue".
+If you prefer to skip this patch, run "git patch --skip" instead.
+To restore the original branch and stop patching, run "git patch --abort".
+EOF
+	exit 1
+}
+
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
+       git patch (--continue | --skip | --abort)
 
     -s, --signoff         add a Signed-off-by line to the commit message
     -3, --3way            attempt three-way merge if a patch does not apply
@@ -40,6 +75,8 @@ EOF
 AMOPTS=
 APPLYOPTS=
 COMMITOPTS=
+ACTION=
+SIGNOFF="false"
 REJECT="true"
 VERBOSE="false"
 QUIET="false"
@@ -48,6 +85,7 @@ while [ $# -ne 0 ]; do
 		usage
 		exit 0
 	elif [ "$1" = "-s" ] || [ "$1" = "--signoff" ]; then
+		SIGNOFF="true"
 		AMOPTS+=" $1"
 		COMMITOPTS+=" $1"
 	elif [ "$1" = "-3" ] || [ "$1" = "--3way" ]; then
@@ -58,6 +96,15 @@ while [ $# -ne 0 ]; do
 	elif [ "$1" = "-q" ] || [ "$1" = "--quiet" ]; then
 		VERBOSE="false"
 		QUIET="true"
+	elif [ "$1" = "--continue" ]; then
+		ACTION="continue"
+		break
+	elif [ "$1" = "--skip" ]; then
+		ACTION="skip"
+		break
+	elif [ "$1" = "--abort" ]; then
+		ACTION="abort"
+		break
 	elif [ "$1" = "--" ]; then
 		shift
 		break
@@ -67,9 +114,38 @@ while [ $# -ne 0 ]; do
 	shift
 done
 
-# Make sure there is no apply-mbox in progress
-if [ -d .git/rebase-apply ]; then
-	fatal "previous rebase directory $dir still exists but patch given."
+# First form
+if [ -z "$ACTION" ]; then
+	if [ "$#" -eq 0 ]; then
+		usage >&2
+		fatal "Too few arguments!"
+	else
+		next="1"
+	fi
+
+	# Make sure there is no apply-mbox in progress
+	for dir in .git/rebase-apply .git/patch-apply; do
+		if [ -d "$dir" ]; then
+			fatal "previous rebase directory $dir still exists but patch given."
+		fi
+	done
+# Second form
+else
+	if [ ! -d .git/patch-apply ]; then
+		fatal "Resolve operation not in progress, we are not resuming."
+	fi
+
+	if [ -f .git/patch-apply/signoff ]; then
+		SIGNOFF="true"
+	fi
+
+	if [ -f .git/patch-apply/quiet ]; then
+		QUIET="true"
+	fi
+
+	if [ -f .git/patch-apply/verbose ]; then
+		VERBOSE="true"
+	fi
 fi
 
 if $REJECT; then
@@ -88,27 +164,65 @@ if $QUIET; then
 	AMOPTS+=" --quiet"
 fi
 
-for patch in "$@"; do
-	# Try to apply mailbox first
-	if git am $AMOPTS "$patch"; then
-		continue
+case "$ACTION" in
+continue)
+	# Restore setup
+	next="$(cat .git/patch-apply/next)"
+
+	if [ -f .git/patch-apply/msg ]; then
+		msg="$(cat .git/patch-apply/msg)"
+		git commit $COMMITOPTS --message "$msg"
+		rm -f .git/patch-apply/msg .git/patch-apply/patch
+		next="$((next + 1))"
+		echo "$next" >.git/patch-apply/next
+	fi
+	;;
+skip)
+	# Reset current patch
+	orig_head="$(cat .git/ORIG_HEAD)"
+	git reset --hard "$orig_head"
+
+	next="$((next + 1))"
+	echo "$next" >.git/patch-apply/next
+	;;
+abort)
+	# Reset current patchset
+	orig_head="$(cat .git/patch-apply/orig-head)"
+	git reset --hard "$orig_head"
+
+	# Remove context and exit
+	git clean -xf
+	rm -rf .git/patch-apply/
+	exit 0
+	;;
+*)
+	# Setup context
+	mkdir .git/patch-apply/
+	git rev-parse HEAD >>.git/patch-apply/orig-head
+	for patch in "$@"; do
+		echo "patch $patch"
+	done >.git/patch-apply/git-patch-todo
+
+	if $SIGNOFF; then
+		echo "1" >.git/patch-apply/signoff
 	fi
 
-	# Applying mailbox failed
-	# Make sure there is no apply-mbox in progress
-	if [ -d .git/rebase-apply ]; then
-		log "Abort: \"$patch\""
-		git am --abort
+	if $QUIET; then
+		echo "1" >.git/patch-apply/quiet
 	fi
 
-	# Try to apply patch
-	msg="$(sanitized_commit_msg $patch)"
-	$QUIET || echo "Applying: $msg" >&2
-	if git apply $APPLYOPTS "$patch"; then
-		git commit $COMMITOPTS -m "$msg"
-		continue
+	if $VERBOSE; then
+		echo "1" >.git/patch-apply/verbose
 	fi
+	;;
+esac
 
-	# Neither am nor apply succeed
-	exit 1
+sed -ne "$next,\$p" .git/patch-apply/git-patch-todo | \
+while read cmd patch; do
+	patch "$patch"
+
+	next="$((next + 1))"
+	echo "$next" >.git/patch-apply/next
 done
+
+rm -rf .git/patch-apply/next
