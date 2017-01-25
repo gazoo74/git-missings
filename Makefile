@@ -23,6 +23,10 @@ alias:
 	git config --global alias.graph 'log --graph --oneline --decorate'
 	git config --global alias.ahead '!f() { br="$$(git upstream)"; git graph $${br:+$$br..}$${1:-HEAD}; }; f'
 
+variables:
+	git config --global rebase.autoStash true
+	git config --global pull.rebase true
+
 install:
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -m 755 git-patch $(DESTDIR)$(PREFIX)/bin

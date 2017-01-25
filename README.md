@@ -22,6 +22,13 @@ git-graph(1) - Show graph commits
 
 git-ahead(1) - Show ahead commits
 
+## VARIABLES
+
+	[rebase]
+		autoStash = true
+	[pull]
+		rebase = true
+
 ## COPYRIGHT
 
 Copyright (c) 2017 Gaël PORTAY
