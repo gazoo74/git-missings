@@ -33,9 +33,21 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/share/man/man1/
 	install -m 644 git-patch.1.gz $(DESTDIR)$(PREFIX)/share/man/man1/
 
+install-bash-completion:
+	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
+	if [ -n "$$completionsdir" ]; then \
+		install -d $(DESTDIR)$$completionsdir/; \
+		install -m 644 bash-completion/git-patch \
+			        $(DESTDIR)$$completionsdir/; \
+	fi
+
 uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/bin/git-patch
 	rm -rf $(DESTDIR)$(PREFIX)/share/man/man1/git-patch.1.gz
+
+uninstall-bash-completion:
+	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
+	rm -f $(DESTDIR)$$completionsdir/git-patch
 
 clean:
 	rm -f git-patch.1.gz
