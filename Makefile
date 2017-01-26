@@ -60,3 +60,4 @@ clean:
 
 %.gz: %
 	gzip -c $^ >$@
+
