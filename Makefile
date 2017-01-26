@@ -13,6 +13,9 @@ all: git-patch.1.gz
 
 man: git-patch.1.gz
 
+check:
+	shellcheck git-patch
+
 alias:
 	git config --global alias.last 'log -1 HEAD'
 	git config --global alias.unstage 'reset HEAD --'

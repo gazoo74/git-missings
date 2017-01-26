@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 2017 Gaël PORTAY <gael.portay@savoirfairelinux.com>
 #
@@ -68,7 +68,8 @@ while [ $# -ne 0 ]; do
 done
 
 # Make sure there is no apply-mbox in progress
-if [ -d .git/rebase-apply ]; then
+dir=".git/rebase-apply"
+if [ -d "$dir" ]; then
 	fatal "previous rebase directory $dir still exists but patch given."
 fi
 
@@ -90,6 +91,7 @@ fi
 
 for patch in "$@"; do
 	# Try to apply mailbox first
+	# shellcheck disable=SC2086
 	if git am $AMOPTS "$patch"; then
 		continue
 	fi
@@ -102,8 +104,9 @@ for patch in "$@"; do
 	fi
 
 	# Try to apply patch
-	msg="$(sanitized_commit_msg $patch)"
+	msg="$(sanitized_commit_msg "$patch")"
 	$QUIET || echo "Applying: $msg" >&2
+	# shellcheck disable=SC2086
 	if git apply $APPLYOPTS "$patch"; then
 		git commit $COMMITOPTS -m "$msg"
 		continue
