@@ -75,7 +75,7 @@ This command run either *am* or, *apply* and *commit*.
 
 == BUGS
 
-Report bugs at *https://github.com/gazoo74/git-patch/issues*
+Report bugs at *https://github.com/gazoo74/git-missings/issues*
 
 == AUTHOR
 
