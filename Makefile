@@ -60,8 +60,13 @@ uninstall-bash-completion:
 	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
 	rm -f $(DESTDIR)$$completionsdir/git-patch
 
+.PHONY: tests
+tests:
+	$(MAKE) -sC $@
+
 .PHONY: clean
 clean:
+	$(MAKE) -sC tests clean
 	rm -f git-patch.1.gz
 
 %.1: %.1.adoc
