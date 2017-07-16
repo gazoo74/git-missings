@@ -1,0 +1,95 @@
+= git-ad(1)
+:doctype: manpage
+:author: Gaël PORTAY
+:email: gael.portay@savoirfairelinux.com
+:lang: en
+:man manual: The Missing Git Commands Manual
+:man source: The Missing Git Commands Project
+
+== NAME
+
+git-ad - Apply a series of patches from mailbox or diffs
+
+== SYNOPSIS
+
+*git ad* [--signoff] [--3way] [--verbose | --quiet] (<mbox> | <diff>)...
+*git ad* (--continue | --skip | --abort)
+*git ad* [--resolvemsg=<msg>] --resolved
+
+== DESCRIPTION
+
+Reads the supplied mailbox or diff output (i.e. "a patch") and applies it to
+files.
+
+When a patch is supplied, this command applies the patch and creates a commit.
+
+When patch fails, it apply the parts of the patch that are applicable, and leave
+the rejected hunks in corresponding *.rej files.
+
+== OPTIONS
+
+(<mbox>|<diff>)...::
+    The list of mailbox or diff files to read patches from. If you do not supply
+    this argument, the command reads from the standard input.
+
+-s, --signoff::
+    Add a Signed-off-by: line to the commit message, using the committer
+    identity of yourself. See the signoff option in git-commit(1) for more
+    information.
+    This flag is passed to the git am (see git-am(1)) and git commit (see
+    git-commit(1)) programs that apply and commit the patch.
+
+-3, --3way::
+    When the patch does not apply cleanly, fall back on 3-way merge if the patch
+    records the identity of blobs it is supposed to apply to, and we have those
+    blobs available locally, possibly leaving the conflict markers in the files
+    in the working tree for the user to resolve. This option implies the --index
+    option, and is incompatible with the --reject and the --cached options.
+    This flag is passed to the git am (see git-am(1)) and git apply (see
+    git-apply(1)) programs that apply the patch.
+
+-q, --quiet::
+    Be quiet. Only print error messages.
+
+--skip::
+    Skip the current patch. This is only meaningful when restarting an aborted
+    patch.
+
+--continue, -r, --resolved::
+    After a patch failure (e.g. attempting to apply conflicting patch), the user
+    has applied it by hand and the index file stores the result of the
+    application. Make a commit using the authorship and commit log extracted
+    from the e-mail message and the current index file, and continue.
+
+--resolvemsg=<msg>::
+    When a patch failure occurs, <msg> will be printed to the screen before
+    exiting. This overrides the standard message informing you to use --continue
+    or --skip to handle the failure. This is solely for internal use between git
+    rebase and git am.
+
+--abort::
+    Restore the original branch and abort the patching operation.
+
+== HOOKS
+
+This command run either *git-am* or, *patch* and *git-commit*.
+
+== BUGS
+
+Report bugs at *https://github.com/gazoo74/git-missing/issues*
+
+== AUTHOR
+
+Written by Gaël PORTAY *gael.portay@savoirfairelinux.com*
+
+== COPYRIGHT
+
+Copyright (c) 2017 Gaël PORTAY
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3.
+
+== SEE ALSO
+
+git-am(1), patch(1)
