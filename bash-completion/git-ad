@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Copyright (c) 2017 Gaël PORTAY <gael.portay@savoirfairelinux.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+#
+
+_git_ad() {
+	local cur prev words cword
+	_init_completion || return
+
+	local opts="--continue --skip --abort --help"
+	opts+=" --reverse --reapply --status"
+	if [[ -d .git/patch-apply ]]; then
+		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+		return
+	fi
+
+	local short_opts="-3 -q -s -h"
+	local long_opts="--3way --quiet --signoff --help"
+	if [[ "$cur" == -* ]]; then
+		COMPREPLY=( $( compgen -W "$short_opts $long_opts" -- "$cur" ) )
+		return
+	fi
+
+	_filedir
+} &&
+complete -F _git_ad git-ad
