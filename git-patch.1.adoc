@@ -14,6 +14,8 @@ git-patch - Apply a series of patches
 
 *git-patch* [--signoff] [--3way] [--verbose | --quiet] [(<mbox> | <unified>)...]
 
+*git-patch* (--continue | --skip | --abort)
+
 == DESCRIPTION
 
 Reads the supplied mailbox or unified output (i.e. "a patch") and applies it to
@@ -53,6 +55,19 @@ leave the rejected hunks in corresponding *.rej files.
 
 -q, --quiet::
     Be quiet. Only print error messages.
+
+--skip::
+    Skip the current patch. This is only meaningful when restarting an aborted
+    patch.
+
+--continue::
+    After a patch failure (e.g. attempting to apply conflicting patch), the user
+    has applied it by hand and the index file stores the result of the
+    application. Make a commit using the authorship and commit log extracted
+    from the e-mail message and the current index file, and continue.
+
+--abort::
+    Restore the original branch and abort the patching operation.
 
 == HOOKS
 

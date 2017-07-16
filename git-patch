@@ -8,6 +8,7 @@
 #
 
 set -e
+set -o pipefail
 
 log() {
 	! $VERBOSE || echo "$*" >&2
@@ -18,6 +19,13 @@ fatal() {
 	exit 1
 }
 
+extract_commit_msg() {
+	sed -e '/^diff /,$d' \
+	    -e '/^--- /,$d' \
+	    -e '/^+++ /,$d' \
+	    "$1"
+}
+
 sanitized_commit_msg() {
 	echo "$*" | \
 	sed -e 's,^.*/,,' \
@@ -26,9 +34,171 @@ sanitized_commit_msg() {
 	    -e 's,[_-], ,g'
 }
 
+index_to_filename() {
+	sed -n .git/patch-apply/todo \
+	    -e "$1p"
+}
+
+get_patched_files() {
+	# Applied patch path/to/file cleanly.
+	sed -n '/^Applied patch /s,Applied patch \(.*\) cleanly.$,\1,p' \
+	    .git/patch-apply/applying
+}
+
+get_reject_files() {
+	# Applying patch path/to/file with x reject[s]...
+	sed -n '/Applying patch /s,Applying patch \(.*\) with [0-9]* rejects\?...$,\1.rej,p' \
+	    .git/patch-apply/applying
+}
+
+get_unpatched_files() {
+	# error: path/to/file: does not exist in index
+	sed -n '/error: /s,^error: \(.*\): does not exist in index$,\1,p' \
+	    .git/patch-apply/applying
+}
+
+get_all_artifacts_files() {
+	get_reject_files
+	get_unpatched_files | \
+	while read -r f; do
+		echo "$f.rej"
+	done
+}
+
+check_for_rej_files() {
+	get_reject_files | \
+	while read -r rej; do
+		if [ -e "$rej" ]; then
+			echo "Remaining reject artifact $rej!" >&2
+			exit 1
+		fi
+	done
+}
+
+check_for_unpatched_files() {
+	get_unpatched_files | \
+	while read -r f; do
+		if [ -e "$f.rej" ]; then
+			echo "Remaining unpatched artifact $f.rej!" >&2
+			exit 1
+		fi
+	done
+}
+
+check_for_artifacts() {
+	check_for_rej_files
+	check_for_unpatched_files
+}
+
+add_patched_files_to_index() {
+	get_patched_files | \
+	while read -r f; do
+		git add "$f"
+	done
+}
+
+saving_unpatched_files_to_rej() {
+	get_unpatched_files | \
+	while read -r f; do
+		mkdir -p "${f%/*}"
+		sed -n "\:--- a/$f:,/--- a/p" \
+		    .git/patch-apply/patch \
+		    >"$f.rej"
+	done
+}
+
+remove_all_artifacts() {
+	get_all_artifacts_files | xargs rm -f
+}
+
+next() {
+	next="$((next + 1))"
+	echo "$next" >.git/patch-apply/next
+	rm -f .git/patch-apply/patch \
+	      .git/patch-apply/msg \
+	      .git/patch-apply/applying
+}
+
+patch() {
+	local msg index filename
+
+	# Try to apply mailbox first
+	# shellcheck disable=SC2086
+	if git am $AMOPTS "$1"; then
+		return
+	fi
+
+	# Applying mailbox failed
+	# Make sure there is no apply-mbox in progress
+	if [ -d .git/rebase-apply ]; then
+		log "Abort: \"$1\""
+		git am --abort
+	fi
+
+	# Try to apply patch
+	index="$(printf "%04i" "$next")"
+	filename="$(index_to_filename "$index")"
+	msg="$(sanitized_commit_msg "$filename")"
+	( echo "$msg"
+	  echo
+	  extract_commit_msg "$1"
+        ) >.git/patch-apply/msg
+
+	$QUIET || echo "Applying: $msg"
+	# shellcheck disable=SC2086
+	if git apply $APPLYOPTS "$1" 2>&1 | \
+	   tee .git/patch-apply/applying >&2; then
+		git commit $COMMITOPTS --file .git/patch-apply/msg
+		return
+	fi
+
+	# Neither am nor apply succeed
+	cp "$1" .git/patch-apply/patch
+	add_patched_files_to_index
+	saving_unpatched_files_to_rej
+
+	cat <<EOF
+The copy of the patch that failed is found in: .git/patch-apply/patch"
+When you have resolved this problem, run "git patch --continue".
+If you prefer to skip this patch, run "git patch --skip" instead.
+To restore the original branch and stop patching, run "git patch --abort".
+EOF
+	exit 1
+}
+
+action_continue() {
+	# No patch in progress... keep going
+	if [ ! -f .git/patch-apply/patch ]; then
+		fatal "No apply in progress?"
+		return
+	fi
+
+	check_for_artifacts
+
+	# shellcheck disable=SC2086
+	git commit $COMMITOPTS --edit --file .git/patch-apply/msg
+	next
+}
+
+action_skip() {
+	remove_all_artifacts
+	next
+}
+
+action_abort() {
+	# Reset current patchset
+	abort_safety="$(cat .git/patch-apply/abort-safety)"
+	git clean -xdf
+	git reset --hard "$abort_safety"
+
+	# Remove context
+	rm -rf .git/patch-apply/
+}
+
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
+   or: git patch (--continue | --skip | --abort)
 
     -s, --signoff         add a Signed-off-by line to the commit message
     -3, --3way            attempt three-way merge if a patch does not apply
@@ -40,6 +210,8 @@ EOF
 AMOPTS=
 APPLYOPTS=
 COMMITOPTS=
+ACTION=
+SIGNOFF="false"
 REJECT="true"
 VERBOSE="false"
 QUIET="false"
@@ -48,8 +220,7 @@ while [ $# -ne 0 ]; do
 		usage
 		exit 0
 	elif [ "$1" = "-s" ] || [ "$1" = "--signoff" ]; then
-		AMOPTS+=" $1"
-		COMMITOPTS+=" $1"
+		SIGNOFF="true"
 	elif [ "$1" = "-3" ] || [ "$1" = "--3way" ]; then
 		REJECT="false"
 	elif [ "$1" = "-v" ] || [ "$1" = "--verbose" ]; then
@@ -58,6 +229,15 @@ while [ $# -ne 0 ]; do
 	elif [ "$1" = "-q" ] || [ "$1" = "--quiet" ]; then
 		VERBOSE="false"
 		QUIET="true"
+	elif [ "$1" = "--continue" ]; then
+		ACTION="continue"
+		break
+	elif [ "$1" = "--skip" ]; then
+		ACTION="skip"
+		break
+	elif [ "$1" = "--abort" ]; then
+		ACTION="abort"
+		break
 	elif [ "$1" = "--" ]; then
 		shift
 		break
@@ -67,10 +247,84 @@ while [ $# -ne 0 ]; do
 	shift
 done
 
-# Make sure there is no apply-mbox in progress
-dir=".git/rebase-apply"
-if [ -d "$dir" ]; then
-	fatal "previous rebase directory $dir still exists but patch given."
+# First form [(<mbox> | <unified>)...]
+if [ -z "$ACTION" ]; then
+	if [ "$#" -eq 0 ]; then
+		usage >&2
+		fatal "Too few arguments!"
+	fi
+
+	# Make sure there is no apply-mbox in progress
+	for dir in .git/rebase-apply .git/patch-apply; do
+		if [ -d "$dir" ]; then
+			fatal "previous rebase directory $dir still exists but patch given."
+		fi
+	done
+
+	# Setup context
+	mkdir .git/patch-apply/
+
+	git rev-parse HEAD >.git/patch-apply/abort-safety
+
+	for patch in "$@"; do
+		next="$((next+1))"
+		index="$(printf "%04i" "$next")"
+		cp "$patch" ".git/patch-apply/$index"
+		echo "${patch##*/}"
+	done >.git/patch-apply/todo
+
+	last="$next"
+	echo "$last" >.git/patch-apply/last
+
+	next="1"
+	echo "$next" >.git/patch-apply/next
+
+	cat <<EOF >.git/patch-apply/author-script
+GIT_AUTHOR_NAME='$GIT_AUTHOR_NAME'
+GIT_AUTHOR_EMAIL='$GIT_AUTHOR_EMAIL'
+GIT_AUTHOR_DATE='$GIT_AUTHOR_DATE'
+EOF
+
+	if $SIGNOFF; then
+		echo "1" >.git/patch-apply/signoff
+	fi
+
+	if ! $REJECT; then
+		echo "1" >.git/patch-apply/threeway
+	fi
+
+	if $QUIET; then
+		echo "1" >.git/patch-apply/quiet
+	fi
+# Second form (--continue | --skip | --abort)
+else
+	if [ ! -d .git/patch-apply ]; then
+		fatal "Resolve operation not in progress, we are not resuming."
+	fi
+
+	next="$(cat .git/patch-apply/next)"
+	last="$(cat .git/patch-apply/last)"
+
+	if [ -f .git/patch-apply/signoff ]; then
+		SIGNOFF="true"
+	fi
+
+	if [ -f .git/patch-apply/threeway ]; then
+		REJECT="false"
+	fi
+
+	if [ -f .git/patch-apply/quiet ]; then
+		QUIET="true"
+	fi
+
+	if [ -f .git/patch-apply/verbose ]; then
+		VERBOSE="true"
+	fi
+fi
+
+if $SIGNOFF; then
+	AMOPTS+=" --signoff"
+	COMMITOPTS+=" --signoff"
 fi
 
 if $REJECT; then
@@ -89,29 +343,24 @@ if $QUIET; then
 	AMOPTS+=" --quiet"
 fi
 
-for patch in "$@"; do
-	# Try to apply mailbox first
-	# shellcheck disable=SC2086
-	if git am $AMOPTS "$patch"; then
-		continue
-	fi
+# shellcheck disable=SC1091
+. .git/patch-apply/author-script
 
-	# Applying mailbox failed
-	# Make sure there is no apply-mbox in progress
-	if [ -d .git/rebase-apply ]; then
-		log "Abort: \"$patch\""
-		git am --abort
-	fi
+# Second form (--continue | --skip | --abort)
+case "$ACTION" in
+continue|skip)
+	"action_$ACTION"
+	;;
+abort)
+	"action_$ACTION"
+	exit
+	;;
+esac
 
-	# Try to apply patch
-	msg="$(sanitized_commit_msg "$patch")"
-	$QUIET || echo "Applying: $msg" >&2
-	# shellcheck disable=SC2086
-	if git apply $APPLYOPTS "$patch"; then
-		git commit $COMMITOPTS -m "$msg"
-		continue
-	fi
-
-	# Neither am nor apply succeed
-	exit 1
+while [ "$next" -le "$last" ]; do
+	patch="$(printf "%04i" "$next")"
+	patch ".git/patch-apply/$patch"
+	next
 done
+
+rm -rf .git/patch-apply
