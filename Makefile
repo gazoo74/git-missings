@@ -10,10 +10,10 @@ PREFIX ?= /usr/local
 all: man
 
 .PHONY: man
-man: git-patch.1.gz git-format-mbox.1.gz
+man: git-patch.1.gz git-format-mbox.1.gz git-ad.1.gz
 
 .PHONY: check
-check: git-patch git-format-mbox
+check: git-patch git-format-mbox git-ad
 	shellcheck $^
 
 .PHONY: alias
@@ -49,11 +49,15 @@ install-all: install install-bash-completion
 .PHONY: install
 install:
 	install -d $(DESTDIR)$(PREFIX)/bin
-	install -m 755 git-patch $(DESTDIR)$(PREFIX)/bin
+	install -m 755 git-patch git-format-mbox git-ad \
+	           $(DESTDIR)$(PREFIX)/bin
 	install -d $(DESTDIR)$(PREFIX)/lib
-	ln -sf ../bin/git-patch $(DESTDIR)$(PREFIX)/lib/
+	for bin in git-patch git-format-mbox git-ad; do \
+		ln -sf ../bin/$$bin $(DESTDIR)$(PREFIX)/lib/; \
+	done
 	install -d $(DESTDIR)$(PREFIX)/share/man/man1/
-	install -m 644 git-patch.1.gz $(DESTDIR)$(PREFIX)/share/man/man1/
+	install -m 644 git-patch.1.gz git-format-mbox.1.gz git-ad.1.gz \
+	           $(DESTDIR)$(PREFIX)/share/man/man1/
 
 .PHONY: install-bash-completion
 install-bash-completion:
@@ -62,20 +66,23 @@ install-bash-completion:
 	                                                     bash-completion)}"; \
 	if [ -n "$$completionsdir" ]; then \
 		install -d $(DESTDIR)$$completionsdir/; \
-		install -m 644 bash-completion/git-patch \
-			       $(DESTDIR)$$completionsdir/; \
-		install -m 644 bash-completion/git-format-mbox \
-			       $(DESTDIR)$$completionsdir/; \
+		for bash in git-patch git-format-mbox git-ad; do \
+			install -m 644 bash-completion/$$bash \
+			        $(DESTDIR)$$completionsdir/; \
+		done; \
 	fi
 
 .PHONY: uninstall
 uninstall:
-	rm -rf $(DESTDIR)$(PREFIX)/bin/git-patch
-	rm -rf $(DESTDIR)$(PREFIX)/bin/git-format-mbox
-	rm -rf $(DESTDIR)$(PREFIX)/lib/git-patch
-	rm -rf $(DESTDIR)$(PREFIX)/lib/git-format-mbox
-	rm -rf $(DESTDIR)$(PREFIX)/share/man/man1/git-patch.1.gz
-	rm -rf $(DESTDIR)$(PREFIX)/share/man/man1/git-format-mbox.1.gz
+	for bin in git-patch git-format-mbox git-ad; do \
+		rm -f $(DESTDIR)$(PREFIX)/bin/$$bin; \
+	done
+	for lib in git-patch git-format-mbox git-ad; do \
+		rm -f $(DESTDIR)$(PREFIX)/lib/$$lib; \
+	done
+	for man in git-patch.1.gz git-format-mbox.1.gz git-ad.1.gz; do \
+		rm -f $(DESTDIR)$(PREFIX)/share/man/man1/$$man; \
+	done
 
 .PHONY: uninstall-bash-completion
 uninstall-bash-completion:
@@ -83,8 +90,9 @@ uninstall-bash-completion:
 	                                                     --variable=completionsdir \
 	                                                     bash-completion)}"; \
 	if [ -n "$$completionsdir" ]; then \
-		rm -f $(DESTDIR)$$completionsdir/git-patch; \
-		rm -f $(DESTDIR)$$completionsdir/git-format-mbox; \
+		for bash in git-patch git-format-mbox git-ad; do \
+			rm -f $(DESTDIR)$$completionsdir/$$bash; \
+		done
 	fi
 
 .PHONY: user-install-all
@@ -101,8 +109,7 @@ tests:
 .PHONY: clean
 clean:
 	$(MAKE) -sC tests mrproper
-	rm -f git-patch.1.gz
-	rm -f git-format-mbox.1.gz
+	rm -f git-patch.1.gz git-format-mbox.1.gz git-ad.1.gz
 
 .PHONY: mrproper
 mrproper: clean
