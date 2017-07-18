@@ -38,6 +38,8 @@ variables:
 install:
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -m 755 git-patch $(DESTDIR)$(PREFIX)/bin
+	install -d $(DESTDIR)$(PREFIX)/lib
+	ln -sf ../bin/git-patch $(DESTDIR)$(PREFIX)/lib/
 	install -d $(DESTDIR)$(PREFIX)/share/man/man1/
 	install -m 644 git-patch.1.gz $(DESTDIR)$(PREFIX)/share/man/man1/
 
@@ -53,6 +55,7 @@ install-bash-completion:
 .PHONY: uninstall
 uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/bin/git-patch
+	rm -rf $(DESTDIR)$(PREFIX)/lib/git-patch
 	rm -rf $(DESTDIR)$(PREFIX)/share/man/man1/git-patch.1.gz
 
 .PHONY: uninstall-bash-completion
