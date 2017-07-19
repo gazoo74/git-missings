@@ -479,6 +479,14 @@ action_continue() {
 		return
 	fi
 
+	resolved
+}
+
+resolved() {
+	if [ ! -f .git/patch-apply/patch ]; then
+		fatal "No ad in progress?"
+	fi
+
 	check_for_artifacts
 
 	edit_commit
@@ -513,7 +521,8 @@ action_resolve() {
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
-   or: git patch (--continue | --skip | --abort | --status | --resolve)
+   or: git patch (--continue | --skip | --abort | --status)
+   or: git patch --resolved
 
         --autoresolve     try to auto-resolve rejects
     -s, --signoff         add a Signed-off-by line to the commit message
@@ -576,6 +585,9 @@ while [ $# -ne 0 ]; do
 		QUIET="t"
 	elif [ "$1" = "--continue" ]; then
 		ACTION="continue"
+		break
+	elif [ "$1" = "--resolved" ]; then
+		ACTION="resolved"
 		break
 	elif [ "$1" = "--skip" ]; then
 		ACTION="skip"
@@ -689,7 +701,7 @@ case "$ACTION" in
 continue|skip)
 	"action_$ACTION"
 	;;
-abort|status|resolve)
+abort|status|resolved)
 	"action_$ACTION"
 	exit
 	;;
