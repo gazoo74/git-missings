@@ -38,7 +38,7 @@ install-bash-completion:
 	if [ -n "$$completionsdir" ]; then \
 		install -d $(DESTDIR)$$completionsdir/; \
 		install -m 644 bash-completion/git-patch \
-			        $(DESTDIR)$$completionsdir/; \
+			       $(DESTDIR)$$completionsdir/; \
 	fi
 
 uninstall:
