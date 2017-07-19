@@ -146,6 +146,7 @@ then
 else
 	ko
 fi
+git status --porcelain
 
 run "Test patching OpenWRT linux generic: --skip continues until next failure"
 [ -e fs/yaffs2/yaffs_vfs.c.rej ]
@@ -161,6 +162,7 @@ then
 else
 	ko
 fi
+git status --porcelain
 
 run "Test patching OpenWRT linux generic: --abort gives up and resets"
 [ -e fs/yaffs2/yaffs_vfs.c.rej ]
@@ -174,6 +176,7 @@ then
 else
 	ko
 fi
+git status --porcelain
 
 # Scenario B
 
@@ -215,6 +218,7 @@ else
 	ko
 fi
 echo
+git status --porcelain
 
 # Scenario C
 
@@ -229,6 +233,7 @@ else
 	ko
 fi
 echo
+git status --porcelain
 
 git cherry-pick ramips
 ! [ -d .git/patch-apply/ ]
@@ -240,5 +245,6 @@ else
 	ko
 fi
 echo
+git status --porcelain
 
 cd -
