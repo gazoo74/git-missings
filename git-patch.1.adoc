@@ -21,6 +21,8 @@ git-patch - Apply a series of patches
 *git-patch* (--continue | --skip | --abort | --status | --resolve |
 --show-current-patch)
 
+*git-patch* --resolved
+
 == DESCRIPTION
 
 Reads the supplied mailbox or unified output (i.e. "a patch") and applies it to
@@ -101,7 +103,7 @@ leave the rejected hunks in corresponding *.rej files.
     Skip the current patch. This is only meaningful when restarting an aborted
     patch.
 
---continue::
+--continue, --resolved::
     After a patch failure (e.g. attempting to apply conflicting patch), the user
     has applied it by hand and the index file stores the result of the
     application. Make a commit using the authorship and commit log extracted

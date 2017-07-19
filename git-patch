@@ -477,6 +477,14 @@ action_continue() {
 		return
 	fi
 
+	resolved
+}
+
+resolved() {
+	if [ ! -f .git/patch-apply/patch ]; then
+		fatal "No ad in progress?"
+	fi
+
 	check_for_artifacts
 
 	edit_commit
@@ -516,6 +524,7 @@ usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
    or: git patch (--continue | --skip | --abort | --status | --resolve | --show-current-patch)
+   or: git patch --resolved
 
         --autoresolve     try to auto-resolve rejects
         --show-current-patch
@@ -580,6 +589,9 @@ while [ $# -ne 0 ]; do
 		QUIET="t"
 	elif [ "$1" = "--continue" ]; then
 		ACTION="continue"
+		break
+	elif [ "$1" = "--resolved" ]; then
+		ACTION="resolved"
 		break
 	elif [ "$1" = "--skip" ]; then
 		ACTION="skip"
@@ -696,7 +708,7 @@ case "$ACTION" in
 continue|skip)
 	"action_$ACTION"
 	;;
-abort|status|resolve|show-current-patch)
+abort|status|resolve|show-current-patch|resolved)
 	"action_$ACTION"
 	exit
 	;;
