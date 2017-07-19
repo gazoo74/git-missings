@@ -215,6 +215,9 @@ saving_unpatched_files_to_rej() {
 		sed -n "\:--- a/$f:,/--- a/p" \
 		    "$gitdir/patch-apply/patch" \
 		    >"$f.rej"
+#
+#		sed -n '/^[0-9]* out of [0-9]* hunks ignored/'"s,$, -- saving rejects to file $f.rej,p" \
+#		    "$gitdir/patch-apply/applying
 	done
 }
 
@@ -402,7 +405,7 @@ patch() {
 
 	# Try to apply mailbox first
 	# shellcheck disable=SC2086
-	if git am $AMOPTS "$1"; then
+	if git am $AMOPTS "$1" 2>&1; then
 		return
 	fi
 
@@ -481,7 +484,7 @@ action_continue() {
 }
 
 resolved() {
-	if [ ! -f .git/patch-apply/patch ]; then
+	if [ ! -f "$gitdir/patch-apply/patch" ]; then
 		fatal "No ad in progress?"
 	fi
 
