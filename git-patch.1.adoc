@@ -98,6 +98,9 @@ leave the rejected hunks in corresponding *.rej files.
 
 -q, --quiet::
     Be quiet. Only print error messages.
+    Report progress to stderr. By default, only a message about the current
+    patch being applied will be printed. This option will cause additional
+    information to be reported.
 
 --skip::
     Skip the current patch. This is only meaningful when restarting an aborted
