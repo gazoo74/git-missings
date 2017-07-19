@@ -12,7 +12,7 @@ git-patch - Apply a series of patches
 
 == SYNOPSIS
 
-*git-patch* [--signoff] [--3way] [--verbose | --quiet] [(<mbox> | <unified>)...]
+*git-patch* [--signoff] [--3way] [--quiet] [(<mbox> | <unified>)...]
 
 *git-patch* (--continue | --skip | --abort)
 
@@ -47,11 +47,6 @@ leave the rejected hunks in corresponding *.rej files.
     option, and is incompatible with the --reject and the --cached options.
     This flag is passed to the git am (see git-am(1)) and git apply (see
     git-apply(1)) programs that apply the patch.
-
--v, --verbose::
-    Report progress to stderr. By default, only a message about the current
-    patch being applied will be printed. This option will cause additional
-    information to be reported.
 
 -q, --quiet::
     Be quiet. Only print error messages.

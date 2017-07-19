@@ -17,8 +17,8 @@ _git_patch() {
 		return
 	fi
 
-	local short_opts="-s -3 -v -q -h"
-	local long_opts="--signoff --3way --verbose --quiet --help"
+	local short_opts="-s -3 -q -h"
+	local long_opts="--signoff --3way --quiet --help"
 	if [[ "$cur" == -* ]]; then
 		COMPREPLY=( $( compgen -W "$short_opts $long_opts" -- "$cur" ) )
 		return
