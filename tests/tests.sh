@@ -116,12 +116,14 @@ clean_and_rebase_to() {
 	rm -rf .git/patch-apply/
 }
 
+PATCHOPTS+="--quiet"
+
 # Scenario A
 
 clean_and_rebase_to master >/dev/null
 
 run "Test patching OpenWRT linux generic: missing files are rejected"
-if ! git-patch ../openwrt-0.5/target/linux/generic/patches-3.18/*.patch && \
+if ! git-patch $PATCHOPTS ../openwrt-0.5/target/linux/generic/patches-3.18/*.patch && \
    ! [ -e fs/yaffs2/yaffs_vfs.c ] && \
      [ -e fs/yaffs2/yaffs_vfs.c.rej ] && \
      git status --porcelain |
@@ -180,7 +182,7 @@ fi
 clean_and_rebase_to master >/dev/null
 
 run "Test patching OpenWRT linux ramips: hunk fails"
-if ! git-patch ../openwrt-0.5/target/linux/ramips/patches-3.18/*.patch && \
+if ! git-patch $PATCHOPTS ../openwrt-0.5/target/linux/ramips/patches-3.18/*.patch && \
      [ -e drivers/usb/host/Kconfig.rej ] && \
      [ -e drivers/usb/host/pci-quirks.h.rej ] && \
      git status --porcelain |
@@ -222,7 +224,7 @@ clean_and_rebase_to master >/dev/null
 git cherry-pick generic >/dev/null
 
 run "Test patching OpenWRT linux generic: with files imported"
-if git-patch ../openwrt-0.5/target/linux/generic/patches-3.18/*.patch
+if git-patch $PATCHOPTS ../openwrt-0.5/target/linux/generic/patches-3.18/*.patch
 then
 	ok
 else
@@ -233,7 +235,7 @@ echo
 git cherry-pick ramips
 ! [ -d .git/patch-apply/ ]
 run "Test patching OpenWRT linux ramips: with files imported"
-if git-patch ../openwrt-0.5/target/linux/ramips/patches-3.18/*.patch
+if git-patch $PATCHOPTS ../openwrt-0.5/target/linux/ramips/patches-3.18/*.patch
 then
 	ok
 else
