@@ -18,7 +18,7 @@ git-patch - Apply a series of patches
 *git-patch* [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--3way] [--quiet] [(<mbox> | <unified>)...]
 
 *git-patch* (--continue | --skip | --abort | --status | --resolve)
-*git-patch* --resolved
+*git-patch* [--resolvemsg=<msg>] --resolved
 
 == DESCRIPTION
 
@@ -108,6 +108,12 @@ leave the rejected hunks in corresponding *.rej files.
     has applied it by hand and the index file stores the result of the
     application. Make a commit using the authorship and commit log extracted
     from the e-mail message and the current index file, and continue.
+
+--resolvemsg=<msg>::
+    When a patch failure occurs, <msg> will be printed to the screen before
+    exiting. This overrides the standard message informing you to use --continue
+    or --skip to handle the failure. This is solely for internal use between git
+    rebase and git am.
 
 --abort::
     Restore the original branch and abort the patching operation.
