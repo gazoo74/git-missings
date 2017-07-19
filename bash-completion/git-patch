@@ -11,14 +11,14 @@ _git_patch() {
 	local cur prev words cword
 	_init_completion || return
 
-	local opts="--continue --skip --abort"
+	local opts="--continue --skip --abort --help"
 	if [[ -d .git/patch-apply ]]; then
 		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 		return
 	fi
 
-	local short_opts="-s -3 -v -q"
-	local long_opts="--signoff --3way --verbose --quiet"
+	local short_opts="-s -3 -v -q -h"
+	local long_opts="--signoff --3way --verbose --quiet --help"
 	if [[ "$cur" == -* ]]; then
 		COMPREPLY=( $( compgen -W "$short_opts $long_opts" -- "$cur" ) )
 		return
