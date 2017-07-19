@@ -10,6 +10,7 @@ _git_patch() {
 	_init_completion || return
 
 	local opts="--continue --skip --abort --status --resolve --show-current-patch --help"
+	opts+=" --resolved"
 	if [[ -d .git/patch-apply ]]; then
 		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 		return
