@@ -503,6 +503,11 @@ EOF
 	hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
 }
 
+resolved() {
+	edit_commit
+	next
+}
+
 action_continue() {
 	# No patch in progress... keep going
 	if [ ! -f .git/patch-apply/patch ]; then
@@ -513,13 +518,12 @@ action_continue() {
 	$QUIET || echo "Applying: $(head -n1 .git/patch-apply/final-commit)"
 	check_for_artifacts
 	if ! check_for_diff; then
-		hint "Use 'git patch --status' to see the differences side-by-side"
+		hint "Use 'git patch --status' to see the differences side-by-side or 'git patch --resolved' if resolved"
 		echo "Warning: changes are not rigorously identical!" >&2
 		exit 1
 	fi
 
-	edit_commit
-	next
+	resolved
 }
 
 action_skip() {
@@ -560,6 +564,16 @@ action_resolve() {
 	autoresolve
 }
 
+action_resolved() {
+	# No patch in progress... keep going
+	if [ ! -f .git/patch-apply/patch ]; then
+		fatal "No apply in progress?"
+	fi
+
+	$QUIET || echo "Applying: $(head -n1 .git/patch-apply/final-commit)"
+	resolved
+}
+
 action_show-current-patch() {
 	cat .git/patch-apply/patch
 }
@@ -567,7 +581,7 @@ action_show-current-patch() {
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
-   or: git patch (--continue | --skip | --abort | --quit | --status | --resolve | --show-current-patch)
+   or: git patch (--continue | --skip | --abort | --quit | --status | --resolve | --resolved | --show-current-patch)
 
         --autoresolve     try to auto-resolve rejects
         --continue        continue applying patches after resolving a conflict
@@ -630,6 +644,9 @@ while [ $# -ne 0 ]; do
 		QUIET="t"
 	elif [ "$1" = "--continue" ]; then
 		ACTION="continue"
+		break
+	elif [ "$1" = "--resolved" ]; then
+		ACTION="resolved"
 		break
 	elif [ "$1" = "--skip" ]; then
 		ACTION="skip"
@@ -753,7 +770,7 @@ case "$ACTION" in
 continue|skip)
 	"action_$ACTION"
 	;;
-abort|quit|status|resolve|show-current-patch)
+abort|quit|status|resolve|resolved|show-current-patch)
 	"action_$ACTION"
 	exit
 	;;
