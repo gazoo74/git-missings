@@ -96,9 +96,13 @@ tests:
 
 .PHONY: clean
 clean:
-	$(MAKE) -sC tests clean
+	$(MAKE) -sC tests mrproper
 	rm -f git-patch.1.gz
 	rm -f git-format-mbox.1.gz
+
+.PHONY: mrproper
+mrproper: clean
+	$(MAKE) -sC tests mrproper
 
 %.1: %.1.adoc
 	asciidoctor -b manpage -o $@ $<
