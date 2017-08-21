@@ -19,11 +19,32 @@ fatal() {
 	exit 1
 }
 
+extract_mailbox_body() {
+	sed -e '1,/^$/d' \
+	    "$1"
+}
+
+extract_mailbox_subject() {
+	sed -n '/Subject: /s,Subject: ,,p' \
+	    "$1"
+}
+
+extract_mailbox_commit_message() {
+	extract_mailbox_body "$1" | \
+	sed -e '/^---$/,$d'
+}
+
 extract_commit_msg() {
 	sed -e '/^diff /,$d' \
 	    -e '/^--- /,$d' \
 	    -e '/^+++ /,$d' \
 	    "$1"
+}
+
+sanitized_mailbox_subject() {
+	# shellcheck disable=SC2001
+	echo "$*" | \
+	sed -e 's,\[PATCH\( [0-9]\+/[0-9]\+\)\?\] ,,'
 }
 
 sanitized_commit_msg() {
@@ -138,11 +159,20 @@ patch() {
 	# Try to apply patch
 	index="$(printf "%04i" "$next")"
 	filename="$(index_to_filename "$index")"
-	msg="$(sanitized_commit_msg "$filename")"
-	( echo "$msg"
-	  echo
-	  extract_commit_msg "$1"
-        ) >.git/patch-apply/msg
+	subject="$(extract_mailbox_subject "$1")"
+	if [ -n "$subject" ]; then
+		# patch is in mailbox format
+		msg="$(sanitized_mailbox_subject "$subject")"
+		echo "$msg"
+		echo
+		extract_mailbox_commit_message "$1"
+	else
+		# patch is a diff format
+		msg="$(sanitized_commit_msg "$filename")"
+		echo "$msg"
+		echo
+		extract_commit_msg "$1"
+	fi >.git/patch-apply/msg
 
 	$QUIET || echo "Applying: $msg"
 	# shellcheck disable=SC2086
