@@ -19,9 +19,23 @@ fatal() {
 	exit 1
 }
 
+extract_mailbox_header() {
+	sed -e '/^$/,$d' \
+	    "$1"
+}
+
 extract_mailbox_body() {
 	sed -e '1,/^$/d' \
 	    "$1"
+}
+
+extract_mailbox_info() {
+	extract_mailbox_header "$1" |
+	sed -e '/From: /s,From: \(.*\) <\(.*\)>,Author: \1\nEmail: \2,p' \
+	    -e '/Subject: /s,\[PATCH\( [0-9]\+/[0-9]\+\)\?\] ,,p' \
+	    -e '/Date: /p' \
+	    -n
+	echo
 }
 
 extract_mailbox_subject() {
@@ -170,6 +184,7 @@ patch() {
 		msg="$(sanitized_mailbox_subject "$subject")"
 		extract_mailbox_commit_message "$1" >.git/patch-apply/msg
 		extract_mailbox_patch "$1" >.git/patch-apply/patch
+		extract_mailbox_info "$1" >.git/patch-apply/info
 	else
 		# patch is a diff format
 		msg="$(sanitized_diff_commit_message "$filename")"
