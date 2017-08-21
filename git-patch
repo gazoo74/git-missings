@@ -257,6 +257,7 @@ usage: git patch [<options>] [(<mbox> | <unified>)...]
     -3, --3way            attempt three-way merge if a patch does not apply
         --no-utf8         no recode into utf8
     -k, --keep            pass -k flag to git-mailinfo
+    -m, --message-id      pass -m flag to git-mailinfo
     -c, --scissors        strip everything before a scissors line
     -q, --quiet           be quiet
 EOF
@@ -278,6 +279,7 @@ SIGN="f"
 THREEWAY="f"
 UTF8="t"
 KEEP="f"
+MESSAGEID="f"
 SCISSORS="f"
 QUIET="f"
 while [ $# -ne 0 ]; do
@@ -292,6 +294,8 @@ while [ $# -ne 0 ]; do
 		UTF8="f"
 	elif [ "$1" = "-k" ] || [ "$1" = "--keep" ]; then
 		KEEP="t"
+	elif [ "$1" = "-m" ] || [ "$1" = "--message-id" ]; then
+		MESSAGEID="t"
 	elif [ "$1" = "-c" ] || [ "$1" = "--scissors" ]; then
 		SCISSORS="t"
 	elif [ "$1" = "-q" ] || [ "$1" = "--quiet" ]; then
@@ -358,6 +362,7 @@ EOF
 	echo "$THREEWAY" >.git/patch-apply/threeway
 	echo "$UTF8" >.git/patch-apply/utf8
 	echo "$KEEP" >.git/patch-apply/keep
+	echo "$MESSAGEID" >.git/patch-apply/messageid
 	echo "$SCISSORS" >.git/patch-apply/scissors
 	echo "$QUIET" >.git/patch-apply/quiet
 # Second form (--continue | --skip | --abort)
@@ -373,6 +378,7 @@ else
 	THREEWAY="$(cat .git/patch-apply/threeway || echo "t")"
 	UTF8="$(cat .git/patch-apply/utf8 || echo "t")"
 	KEEP="$(cat .git/patch-apply/keep || echo "f")"
+	MESSAGEID="$(cat .git/patch-apply/messageid || echo "f")"
 	SCISSORS="$(cat .git/patch-apply/scissors || echo "f")"
 	QUIET="$(cat .git/patch-apply/quiet || echo "f")"
 fi
