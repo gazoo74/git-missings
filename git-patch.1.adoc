@@ -15,7 +15,7 @@ git-patch - Apply a series of patches
 *git-patch* [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
 [--scissors] [(<mbox> | <unified>)...]
 
-*git-patch* (--continue | --skip | --abort)
+*git-patch* (--continue | --skip | --abort | --status)
 
 == DESCRIPTION
 
@@ -79,6 +79,9 @@ leave the rejected hunks in corresponding *.rej files.
 
 --abort::
     Restore the original branch and abort the patching operation.
+
+--status::
+    Compare original patch to patching operation.
 
 == HOOKS
 

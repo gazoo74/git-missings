@@ -187,6 +187,18 @@ edit_commit() {
 	commit "$@"
 }
 
+status_cached() {
+	git diff --cached | sed -e '/^diff /d' -e '/^index /d'
+}
+
+status_patch() {
+	sed -e '1,/^diff/d' \
+	    -e '/^-- $/,$d' \
+	    -e '/^diff /d' \
+	    -e '/^index /d' \
+	    .git/patch-apply/patch
+}
+
 patch() {
 	local msg index filename
 
@@ -281,10 +293,16 @@ action_abort() {
 	rm -rf .git/patch-apply/
 }
 
+action_status() {
+	status_patch |
+	diff -ud --label "patch" --label "cached" --color \
+	     - <(status_cached) || true
+}
+
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
-   or: git patch (--continue | --skip | --abort)
+   or: git patch (--continue | --skip | --abort | --status)
 
     -s, --signoff         add a Signed-off-by line to the commit message
     -3, --3way            attempt three-way merge if a patch does not apply
@@ -341,6 +359,9 @@ while [ $# -ne 0 ]; do
 		break
 	elif [ "$1" = "--abort" ]; then
 		ACTION="abort"
+		break
+	elif [ "$1" = "--status" ]; then
+		ACTION="status"
 		break
 	elif [ "$1" = "--" ]; then
 		shift
@@ -435,12 +456,12 @@ else
 	APPLYOPTS+=" --verbose"
 fi
 
-# Second form (--continue | --skip | --abort)
+# Second form (--continue | --skip | --abort | --status)
 case "$ACTION" in
 continue|skip)
 	"action_$ACTION"
 	;;
-abort)
+abort|status)
 	"action_$ACTION"
 	exit
 	;;
