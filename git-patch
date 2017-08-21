@@ -136,7 +136,7 @@ next() {
 	next="$((next + 1))"
 	echo "$next" >.git/patch-apply/next
 	rm -f .git/patch-apply/patch \
-	      .git/patch-apply/msg \
+	      .git/patch-apply/final-commit \
 	      .git/patch-apply/applying
 }
 
@@ -163,22 +163,24 @@ patch() {
 	if [ -n "$subject" ]; then
 		# patch is in mailbox format
 		msg="$(sanitized_mailbox_subject "$subject")"
-		echo "$msg"
-		echo
-		extract_mailbox_commit_message "$1"
+		extract_mailbox_commit_message "$1" >.git/patch-apply/msg
 	else
 		# patch is a diff format
 		msg="$(sanitized_diff_commit_message "$filename")"
-		echo "$msg"
-		echo
-		extract_diff_commit_message "$1"
-	fi >.git/patch-apply/msg
+		extract_diff_commit_message "$1" >.git/patch-apply/msg
+	fi
+
+	# final-commit contains the commit message
+	cat - .git/patch-apply/msg <<EOF >.git/patch-apply/final-commit
+$msg
+
+EOF
 
 	$QUIET || echo "Applying: $msg"
 	# shellcheck disable=SC2086
 	if git apply $APPLYOPTS "$1" 2>&1 | \
 	   tee .git/patch-apply/applying >&2; then
-		git commit $COMMITOPTS --file .git/patch-apply/msg
+		git commit $COMMITOPTS --file .git/patch-apply/final-commit
 		return
 	fi
 
@@ -206,7 +208,7 @@ action_continue() {
 	check_for_artifacts
 
 	# shellcheck disable=SC2086
-	git commit $COMMITOPTS --edit --file .git/patch-apply/msg
+	git commit $COMMITOPTS --edit --file .git/patch-apply/final-commit
 	next
 }
 
