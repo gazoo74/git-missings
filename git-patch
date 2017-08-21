@@ -255,6 +255,7 @@ usage: git patch [<options>] [(<mbox> | <unified>)...]
 
     -s, --signoff         add a Signed-off-by line to the commit message
     -3, --3way            attempt three-way merge if a patch does not apply
+        --no-utf8         no recode into utf8
     -q, --quiet           be quiet
 EOF
 }
@@ -273,6 +274,7 @@ COMMITOPTS=
 ACTION=
 SIGN="f"
 THREEWAY="f"
+UTF8="t"
 QUIET="f"
 while [ $# -ne 0 ]; do
 	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
@@ -282,6 +284,8 @@ while [ $# -ne 0 ]; do
 		SIGN="t"
 	elif [ "$1" = "-3" ] || [ "$1" = "--3way" ]; then
 		THREEWAY="t"
+	elif [ "$1" = "--no-utf8" ]; then
+		UTF8="f"
 	elif [ "$1" = "-q" ] || [ "$1" = "--quiet" ]; then
 		QUIET="t"
 	elif [ "$1" = "--continue" ]; then
@@ -344,6 +348,7 @@ EOF
 
 	echo "$SIGN" >.git/patch-apply/sign
 	echo "$THREEWAY" >.git/patch-apply/threeway
+	echo "$UTF8" >.git/patch-apply/utf8
 	echo "$QUIET" >.git/patch-apply/quiet
 # Second form (--continue | --skip | --abort)
 else
@@ -356,6 +361,7 @@ else
 
 	SIGN="$(cat .git/patch-apply/sign || echo "f")"
 	THREEWAY="$(cat .git/patch-apply/threeway || echo "t")"
+	UTF8="$(cat .git/patch-apply/utf8 || echo "t")"
 	QUIET="$(cat .git/patch-apply/quiet || echo "f")"
 fi
 
@@ -370,6 +376,12 @@ if $THREEWAY; then
 else
 	AMOPTS+=" --reject"
 	APPLYOPTS+=" --reject --index"
+fi
+
+if $UTF8; then
+	AMOPTS+=" --utf8"
+else
+	AMOPTS+=" --no-utf8"
 fi
 
 if $QUIET; then

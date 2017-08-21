@@ -12,7 +12,7 @@ git-patch - Apply a series of patches
 
 == SYNOPSIS
 
-*git-patch* [--signoff] [--3way] [--quiet] [(<mbox> | <unified>)...]
+*git-patch* [--signoff] [--no-utf8] [--3way] [--quiet] [(<mbox> | <unified>)...]
 
 *git-patch* (--continue | --skip | --abort)
 
@@ -38,6 +38,9 @@ leave the rejected hunks in corresponding *.rej files.
     information.
     This flag is passed to the git am (see git-am(1)) and git commit (see
     git-commit(1)) programs that apply and commit the patch.
+
+--no-utf8::
+    Pass -n flag to git mailinfo (see git-mailinfo(1)).
 
 -3, --3way::
     When the patch does not apply cleanly, fall back on 3-way merge if the patch
