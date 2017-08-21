@@ -243,11 +243,6 @@ done
 
 # First form [(<mbox> | <unified>)...]
 if [ -z "$ACTION" ]; then
-	if [ "$#" -eq 0 ]; then
-		usage >&2
-		fatal "Too few arguments!"
-	fi
-
 	# Make sure there is no apply-mbox in progress
 	for dir in .git/rebase-apply .git/patch-apply; do
 		if [ -d "$dir" ]; then
@@ -260,12 +255,19 @@ if [ -z "$ACTION" ]; then
 
 	git rev-parse HEAD >.git/patch-apply/abort-safety
 
-	for patch in "$@"; do
+	if [ "$#" -eq 0 ]; then
 		next="$((next+1))"
 		index="$(printf "%04i" "$next")"
-		cp "$patch" ".git/patch-apply/$index"
+		cat - >".git/patch-apply/$index"
 		echo "${patch##*/}"
-	done >.git/patch-apply/todo
+	else
+		for patch in "$@"; do
+			next="$((next+1))"
+			index="$(printf "%04i" "$next")"
+			cp "$patch" ".git/patch-apply/$index"
+			echo "${patch##*/}"
+		done
+	fi >.git/patch-apply/todo
 
 	last="$next"
 	echo "$last" >.git/patch-apply/last
