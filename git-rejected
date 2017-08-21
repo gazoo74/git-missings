@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+# Copyright (c) 2017 Gaël PORTAY <gael.portay@savoirfairelinux.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+#
+
+set -e
+set -o pipefail
+
+get_reject_files() {
+	# Applying patch path/to/file with x reject[s]...
+	sed -n '/Applying patch /s,Applying patch \(.*\) with [0-9]* rejects\?...$,\1.rej,p' \
+	    .git/patch-apply/applying
+}
+
+get_unpatched_files() {
+	# error: path/to/file: does not exist in index
+	sed -n '/error: /s,^error: \(.*\): does not exist in index$,\1,p' \
+	    .git/patch-apply/applying
+}
+
+get_unpatched_rejects() {
+	get_unpatched_files | \
+	while read -r f; do
+		echo "$f.rej"
+	done
+}
+
+for rej in $(get_unpatched_rejects); do
+	[ -e "$rej" ] || continue
+
+	oldfile="${rej%*.rej}"
+	echo -n "File to patch for $oldfile: "
+	while read -er newfile; do
+		if [ ! -e "$newfile" ]; then
+			echo "Error: $newfile: No such file!" >&2
+		fi
+
+		if cat "$rej" | sed -e "s,$oldfile,$newfile," | \
+		   git apply "$@" -; then
+			break
+		fi
+
+		echo -n "File to patch for $oldfile: "
+	done
+
+	git add "$newfile"
+	rm -f "$rej"
+done
+
+for rej in $(get_reject_files); do
+	[ -e "$rej" ] || continue
+
+	file="${rej%*.rej}"
+	if ! cat "$rej" | sed -e "/^diff a/a--- a/$file\n+++ b/$file" | \
+	     git apply "$@" -; then
+		continue
+	fi
+
+	git add "$file"
+	rm -f "$rej"
+done
