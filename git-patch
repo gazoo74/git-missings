@@ -34,7 +34,7 @@ extract_mailbox_commit_message() {
 	sed -e '/^---$/,$d'
 }
 
-extract_commit_msg() {
+extract_diff_commit_message() {
 	sed -e '/^diff /,$d' \
 	    -e '/^--- /,$d' \
 	    -e '/^+++ /,$d' \
@@ -47,7 +47,7 @@ sanitized_mailbox_subject() {
 	sed -e 's,\[PATCH\( [0-9]\+/[0-9]\+\)\?\] ,,'
 }
 
-sanitized_commit_msg() {
+sanitized_diff_commit_message() {
 	echo "$*" | \
 	sed -e 's,^.*/,,' \
 	    -e 's,^[0-9]*[_-],,' \
@@ -168,10 +168,10 @@ patch() {
 		extract_mailbox_commit_message "$1"
 	else
 		# patch is a diff format
-		msg="$(sanitized_commit_msg "$filename")"
+		msg="$(sanitized_diff_commit_message "$filename")"
 		echo "$msg"
 		echo
-		extract_commit_msg "$1"
+		extract_diff_commit_message "$1"
 	fi >.git/patch-apply/msg
 
 	$QUIET || echo "Applying: $msg"
