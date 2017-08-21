@@ -256,6 +256,7 @@ usage: git patch [<options>] [(<mbox> | <unified>)...]
     -s, --signoff         add a Signed-off-by line to the commit message
     -3, --3way            attempt three-way merge if a patch does not apply
         --no-utf8         no recode into utf8
+    -k, --keep            pass -k flag to git-mailinfo
     -q, --quiet           be quiet
 EOF
 }
@@ -275,6 +276,7 @@ ACTION=
 SIGN="f"
 THREEWAY="f"
 UTF8="t"
+KEEP="f"
 QUIET="f"
 while [ $# -ne 0 ]; do
 	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
@@ -286,6 +288,8 @@ while [ $# -ne 0 ]; do
 		THREEWAY="t"
 	elif [ "$1" = "--no-utf8" ]; then
 		UTF8="f"
+	elif [ "$1" = "-k" ] || [ "$1" = "--keep" ]; then
+		KEEP="t"
 	elif [ "$1" = "-q" ] || [ "$1" = "--quiet" ]; then
 		QUIET="t"
 	elif [ "$1" = "--continue" ]; then
@@ -349,6 +353,7 @@ EOF
 	echo "$SIGN" >.git/patch-apply/sign
 	echo "$THREEWAY" >.git/patch-apply/threeway
 	echo "$UTF8" >.git/patch-apply/utf8
+	echo "$KEEP" >.git/patch-apply/keep
 	echo "$QUIET" >.git/patch-apply/quiet
 # Second form (--continue | --skip | --abort)
 else
@@ -362,6 +367,7 @@ else
 	SIGN="$(cat .git/patch-apply/sign || echo "f")"
 	THREEWAY="$(cat .git/patch-apply/threeway || echo "t")"
 	UTF8="$(cat .git/patch-apply/utf8 || echo "t")"
+	KEEP="$(cat .git/patch-apply/keep || echo "f")"
 	QUIET="$(cat .git/patch-apply/quiet || echo "f")"
 fi
 
