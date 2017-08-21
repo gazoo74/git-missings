@@ -34,6 +34,11 @@ extract_mailbox_commit_message() {
 	sed -e '/^---$/,$d'
 }
 
+extract_mailbox_patch() {
+	extract_mailbox_body "$1" | \
+	sed -n '/^---/,$p'
+}
+
 extract_diff_commit_message() {
 	sed -e '/^diff /,$d' \
 	    -e '/^--- /,$d' \
@@ -164,10 +169,12 @@ patch() {
 		# patch is in mailbox format
 		msg="$(sanitized_mailbox_subject "$subject")"
 		extract_mailbox_commit_message "$1" >.git/patch-apply/msg
+		extract_mailbox_patch "$1" >.git/patch-apply/patch
 	else
 		# patch is a diff format
 		msg="$(sanitized_diff_commit_message "$filename")"
 		extract_diff_commit_message "$1" >.git/patch-apply/msg
+		cp "$1" .git/patch-apply/patch
 	fi
 
 	# final-commit contains the commit message
@@ -185,7 +192,6 @@ EOF
 	fi
 
 	# Neither am nor apply succeed
-	cp "$1" .git/patch-apply/patch
 	add_patched_files_to_index
 	saving_unpatched_files_to_rej
 
