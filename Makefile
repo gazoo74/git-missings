@@ -28,6 +28,7 @@ alias:
 	git config --global alias.upstream 'rev-parse --abbrev-ref --symbolic-full-name @{u}'
 	git config --global alias.graph 'log --graph --oneline --decorate'
 	git config --global alias.ahead '!f() { br="$$(git upstream)"; git graph $${br:+$$br..}$${1:-HEAD}; }; f'
+	git config --global alias.autoresolve 'patch --autoresolve'
 
 .PHONY: variables
 variables:
