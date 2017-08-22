@@ -17,6 +17,32 @@ fatal() {
 	exit 1
 }
 
+prompt_yes_no() {
+	local resp
+	while read -rp"$1 $2? " resp; do
+		[ -n "$resp" ] || break
+
+		resp="$(echo "$resp" | sed -e 's/.*/\L&/')"
+		case "$resp" in
+		y|yes|n|no) break;;
+		esac
+
+		echo "Invalid response!" >&2;
+		unset resp
+	done
+
+	if [ -z "$resp" ]; then
+		resp="$(echo "$2" | sed -e 's,^\[\(.*\)/.*\]$,\1,')"
+	fi
+
+	resp="$(echo "$resp" | sed -e 's/.*/\L&/')"
+	case "$resp" in
+	y|yes)	return 0;;
+	esac
+
+	return 1
+}
+
 extract_mailbox_header() {
 	sed -e '/^$/,$d' \
 	    "$1"
@@ -205,6 +231,17 @@ commit_status() {
 	action_status | sed -e 's,^,#\t,'
 }
 
+diff_tool() {
+	local difftool
+
+	if ! difftool="$(git config --get diff.tool)"; then
+		return 1
+	fi
+
+	"$difftool" "$@" && \
+	prompt_yes_no "Does conflicts are successfully merged" "[No/yes]"
+}
+
 resolve_unpatched() {
 	for rej in $(get_unpatched_rejects); do
 		[ -e "$rej" ] || continue
@@ -240,6 +277,16 @@ resolve_unpatched() {
 				ln -sf "$(realpath "$patchfile.rej")" "$rej"
 			fi
 
+			# Manually merge
+			if [ -t 0 ] && diff_tool "$rej" "$patchfile"; then
+				if [ -L "$rej" ]; then
+					readlink "$rej" | xargs rm -f
+				fi
+				git add "$patchfile"
+				rm -f "$rej"
+				break
+			fi
+
 			return 1
 		done
 	done
@@ -263,6 +310,16 @@ resolve_rejected() {
 		# Try applying and save rejects...
 		if sed -e "/^diff a/a--- a/$patchfile\n+++ b/$patchfile" "$rej" | \
 		   git apply "$@" - --reject; then
+			git add "$patchfile"
+			rm -f "$rej"
+			break
+		fi
+
+		# Manually merge
+		if [ -t 0 ] && diff_tool "$rej" "$patchfile"; then
+			if [ -L "$rej" ]; then
+				readlink "$rej" | xargs rm -f
+			fi
 			git add "$patchfile"
 			rm -f "$rej"
 			break
