@@ -46,6 +46,33 @@ EOF
 	exit 1
 }
 
+prompt_yes_no() {
+	local choices
+	local resp
+
+	while read -r -p "$*? " resp; do
+		if [[ ${resp,,} =~ ^(y|yes|n|no|)$ ]]; then
+			break
+		fi
+
+		echo "$resp: Invalid response!" >&2;
+		unset resp
+	done
+
+	if [ -z "$resp" ]; then
+		read -a choices < <(echo "${2//\//] [}")
+		resp="${choices[0]}"
+	else
+		resp="[$resp]"
+	fi
+
+	if [[ "${resp,,}" =~ ^\[(y|yes)\]$ ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
 extract_mailbox_header() {
 	sed -e '/^$/,$d' \
 	       "$1"
@@ -350,6 +377,14 @@ status_patch_file_changes_only() {
 	sed -e '/^\(@@\| \)/d'
 }
 
+diff_tool() {
+	local difftool
+
+	difftool="$(git config --get diff.tool || echo vimdiff)"
+
+	"$difftool" "$@"
+}
+
 resolve_unpatched() {
 	for rej in $(get_unpatched_rejects); do
 		[ -e "$rej" ] || continue
@@ -387,6 +422,20 @@ resolve_unpatched() {
 				ln -sf "$(realpath "$patchfile.rej")" "$rej"
 			fi
 
+			# Manually merge
+			if [ -t 0 ] && diff_tool "$rej" "$patchfile"; then
+				if ! prompt_yes_no "Does conflicts are successfully merged" "[No/yes]"; then
+					return 1
+				fi
+
+				git add "$patchfile"
+				if [ -L "$rej" ]; then
+					readlink "$rej" | xargs rm -f
+				fi
+				rm -f "$rej"
+				break
+			fi
+
 			return 1
 		done
 	done
@@ -411,6 +460,20 @@ resolve_rejected() {
 		if sed -e "/^diff a/a--- a/$patchfile\n+++ b/$patchfile" "$rej" | \
 		   git apply - --reject; then
 			git add "$patchfile"
+			rm -f "$rej"
+			break
+		fi
+
+		# Manually merge
+		if [ -t 0 ] && diff_tool "$rej" "$patchfile"; then
+			if ! prompt_yes_no "Does conflicts are successfully merged" "[No/yes]"; then
+				return 1
+			fi
+
+			git add "$patchfile"
+			if [ -L "$rej" ]; then
+				readlink "$rej" | xargs rm -f
+			fi
 			rm -f "$rej"
 			break
 		fi
