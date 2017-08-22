@@ -15,6 +15,9 @@ git-patch - Apply a series of patches
 *git-patch* [--autoresolve] [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
 [--scissors] [(<mbox> | <unified>)...]
 
+*git-patch* [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--3way]
+[--quiet] [(<mbox> | <unified>)...]
+
 *git-patch* (--continue | --skip | --abort | --status | --resolve |
 --show-current-patch)
 
@@ -49,14 +52,35 @@ leave the rejected hunks in corresponding *.rej files.
 -k, --keep::
     Pass -k flag to git mailinfo (see git-mailinfo(1)).
 
+--keep-non-patch::
+    Pass -b flag to git mailinfo (see git-mailinfo(1)).
+
+--[no-]keep-cr::
+    With --keep-cr, call git mailsplit (see git-mailsplit(1)) with the same
+    option, to prevent it from stripping CR at the end of lines.  am.keepcr
+    configuration variable can be used to specify the default behaviour.
+    --no-keep-cr is useful to override am.keepcr.
+
 -c, --scissors::
     Remove everything in body before a scissors line (see git-mailinfo(1)). Can
     be activated by default using the mailinfo.scissors configuration variable.
+
+--no-scissors::
+    Ignore scissors lines (see git-mailinfo(1)).
 
 -m, --message-id::
     Pass the -m flag to git mailinfo (see git-mailinfo(1)), so that the
     Message-ID header is added to the commit message. The am.messageid
     configuration variable can be used to specify the default behaviour.
+
+-u, --utf8::
+    Pass -u flag to git mailinfo (see git-mailinfo(1)). The proposed commit log
+    message taken from the e-mail is re-coded into UTF-8 encoding (configuration
+    variable i18n.commitencoding can be used to specify project’s preferred
+    encoding if it is not UTF-8).
+
+    This was optional in prior versions of git, but now it is the default. You
+    can use --no-utf8 to override this.
 
 --no-utf8::
     Pass -n flag to git mailinfo (see git-mailinfo(1)).
