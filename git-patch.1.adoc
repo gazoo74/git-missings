@@ -12,7 +12,7 @@ git-patch - Apply a series of patches
 
 == SYNOPSIS
 
-*git-patch* [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
+*git-patch* [--autoresolve] [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
 [--scissors] [(<mbox> | <unified>)...]
 
 *git-patch* (--continue | --skip | --abort | --status)
@@ -32,6 +32,11 @@ leave the rejected hunks in corresponding *.rej files.
 (<mbox>|<unified>)...::
     The list of mailbox or unified files to read patches from. If you do not
     supply this argument, the command reads from the standard input.
+
+--autoresolve::
+    Try to automatically resolve rejected hunks. First 3-way merges unpatched
+    files; then applies rejects with a 2-lines context, and finally a
+    single-line context.
 
 -s, --signoff::
     Add a Signed-off-by: line to the commit message, using the committer

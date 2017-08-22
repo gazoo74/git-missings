@@ -104,12 +104,16 @@ get_unpatched_files() {
 	    .git/patch-apply/applying
 }
 
-get_all_artifacts_files() {
-	get_reject_files
+get_unpatched_rejects() {
 	get_unpatched_files | \
 	while read -r f; do
 		echo "$f.rej"
 	done
+}
+
+get_all_artifacts_files() {
+	get_reject_files
+	get_unpatched_rejects
 }
 
 check_for_rej_files() {
@@ -199,6 +203,89 @@ status_patch() {
 	    .git/patch-apply/patch
 }
 
+resolve_unpatched() {
+	for rej in $(get_unpatched_rejects); do
+		[ -e "$rej" ] || continue
+
+		oldfile="${rej%*.rej}"
+		while read -erp "File to patch for $oldfile: " patchfile; do
+			[ -n "$patchfile" ] || continue
+			if [ ! -e "$patchfile" ]; then
+				echo "Error: $patchfile: No such file!" >&2
+				continue
+			fi
+
+			# Try applying reject in a treeway merge...
+			if sed -e "s,$oldfile,$patchfile," "$rej" | \
+			   git apply "$@" - -3; then
+				git add "$patchfile"
+				rm -f "$rej"
+				break
+			fi
+
+			# Try applying and save rejects...
+			if sed -e "s,$oldfile,$patchfile," "$rej" | \
+			   git apply "$@" - --reject; then
+				git add "$patchfile"
+				rm -f "$rej"
+				break
+			fi
+
+			# New rejects found!
+			if [ -e "$patchfile.rej" ]; then
+				git add "$patchfile"
+				rm -f "$rej"
+				ln -sf "$(realpath "$patchfile.rej")" "$rej"
+			fi
+
+			return 1
+		done
+	done
+}
+
+resolve_rejected() {
+	for rej in $(get_reject_files); do
+		[ -e "$rej" ] || continue
+
+		local patchfile
+		patchfile="${rej%*.rej}"
+
+		# Try applying reject in a treeway merge...
+		if sed -e "/^diff a/a--- a/$patchfile\n+++ b/$patchfile" "$rej" | \
+		   git apply "$@" - -3; then
+			git add "$patchfile"
+			rm -f "$rej"
+			break
+		fi
+
+		# Try applying and save rejects...
+		if sed -e "/^diff a/a--- a/$patchfile\n+++ b/$patchfile" "$rej" | \
+		   git apply "$@" - --reject; then
+			git add "$patchfile"
+			rm -f "$rej"
+			break
+		fi
+
+		return 1
+	done
+}
+
+autoresolve() {
+	# Reduce context amount of lines
+	if ! resolve_rejected -C2 --recount ||
+	   ! resolve_rejected -C1 --recount; then
+		return 1
+	fi
+
+	# Prompt for unpatch files
+	if ! [ -t 0 ] ||
+	   ! resolve_unpatched; then
+		return 1
+	fi
+
+	return 0
+}
+
 patch() {
 	local msg index filename
 
@@ -256,6 +343,12 @@ EOF
 	add_patched_files_to_index
 	saving_unpatched_files_to_rej
 
+	# Try to auto-resolve
+	if $AUTORESOLVE && autoresolve; then
+		edit_commit
+		return
+	fi
+
 	cat <<EOF
 The copy of the patch that failed is found in: .git/patch-apply/patch"
 When you have resolved this problem, run "git patch --continue".
@@ -302,8 +395,9 @@ action_status() {
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
-   or: git patch (--continue | --skip | --abort | --status)
+   or: git patch (--continue | --skip | --abort | --status | --resolve)
 
+        --autoresolve     try to auto-resolve rejects
     -s, --signoff         add a Signed-off-by line to the commit message
     -3, --3way            attempt three-way merge if a patch does not apply
         --no-utf8         no recode into utf8
@@ -326,6 +420,7 @@ AMOPTS=
 APPLYOPTS=
 COMMITOPTS=
 ACTION=
+AUTORESOLVE="f"
 SIGN="f"
 THREEWAY="f"
 UTF8="t"
@@ -337,6 +432,8 @@ while [ $# -ne 0 ]; do
 	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 		usage
 		exit 0
+	elif [ "$1" = "--autoresolve" ]; then
+		AUTORESOLVE="t"
 	elif [ "$1" = "-s" ] || [ "$1" = "--signoff" ]; then
 		SIGN="t"
 	elif [ "$1" = "-3" ] || [ "$1" = "--3way" ]; then
@@ -406,6 +503,7 @@ if [ -z "$ACTION" ]; then
 	next="1"
 	echo "$next" >.git/patch-apply/next
 
+	echo "$AUTORESOLVE" >.git/patch-apply/autoresolve
 	echo "$SIGN" >.git/patch-apply/sign
 	echo "$THREEWAY" >.git/patch-apply/threeway
 	echo "$UTF8" >.git/patch-apply/utf8
@@ -422,6 +520,7 @@ else
 	next="$(cat .git/patch-apply/next)"
 	last="$(cat .git/patch-apply/last)"
 
+	AUTORESOLVE="$(cat .git/patch-apply/autoresolve || echo "f")"
 	SIGN="$(cat .git/patch-apply/sign || echo "f")"
 	THREEWAY="$(cat .git/patch-apply/threeway || echo "t")"
 	UTF8="$(cat .git/patch-apply/utf8 || echo "t")"
@@ -456,12 +555,12 @@ else
 	APPLYOPTS+=" --verbose"
 fi
 
-# Second form (--continue | --skip | --abort | --status)
+# Second form (--continue | --skip | --abort | --status | --resolve)
 case "$ACTION" in
 continue|skip)
 	"action_$ACTION"
 	;;
-abort|status)
+abort|status|resolve)
 	"action_$ACTION"
 	exit
 	;;
