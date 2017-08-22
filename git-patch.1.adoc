@@ -15,7 +15,7 @@ git-patch - Apply a series of patches
 *git-patch* [--autoresolve] [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
 [--scissors] [(<mbox> | <unified>)...]
 
-*git-patch* (--continue | --skip | --abort | --status)
+*git-patch* (--continue | --skip | --abort | --status | --resolve)
 
 == DESCRIPTION
 
@@ -87,6 +87,9 @@ leave the rejected hunks in corresponding *.rej files.
 
 --status::
     Compare original patch to patching operation.
+
+--resolve::
+    Try to automatically resolve rejected hunks. See --autoresolve option.
 
 == HOOKS
 

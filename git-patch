@@ -392,6 +392,10 @@ action_status() {
 	     - <(status_cached) || true
 }
 
+action_resolve() {
+	autoresolve
+}
+
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
@@ -459,6 +463,9 @@ while [ $# -ne 0 ]; do
 		break
 	elif [ "$1" = "--status" ]; then
 		ACTION="status"
+		break
+	elif [ "$1" = "--resolve" ]; then
+		ACTION="resolve"
 		break
 	elif [ "$1" = "--" ]; then
 		shift

@@ -11,7 +11,7 @@ _git_patch() {
 	local cur prev words cword
 	_init_completion || return
 
-	local opts="--continue --skip --abort --status --help"
+	local opts="--continue --skip --abort --status --resolve --help"
 	if [[ -d .git/patch-apply ]]; then
 		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 		return
