@@ -203,6 +203,10 @@ status_patch() {
 	    .git/patch-apply/patch
 }
 
+commit_status() {
+	action_status | sed -e 's,^,#\t,'
+}
+
 resolve_unpatched() {
 	for rej in $(get_unpatched_rejects); do
 		[ -e "$rej" ] || continue
