@@ -297,6 +297,17 @@ commit_status() {
 	action_status | sed -e 's,^,#\t,'
 }
 
+diff_tool() {
+	local difftool
+
+	if ! difftool="$(git config --get diff.tool)"; then
+		return 1
+	fi
+
+	"$difftool" "$@" && \
+	prompt_yes_no "Does conflicts are successfully merged" "[No/yes]"
+}
+
 resolve_unpatched() {
 	for rej in $(get_unpatched_rejects); do
 		[ -e "$rej" ] || continue
