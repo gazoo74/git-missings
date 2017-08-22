@@ -39,7 +39,7 @@ for rej in $(get_unpatched_rejects); do
 			echo "Error: $newfile: No such file!" >&2
 		fi
 
-		if cat "$rej" | sed -e "s,$oldfile,$newfile," | \
+		if sed -e "s,$oldfile,$newfile," "$rej" | \
 		   git apply "$@" -; then
 			break
 		fi
@@ -55,7 +55,7 @@ for rej in $(get_reject_files); do
 	[ -e "$rej" ] || continue
 
 	file="${rej%*.rej}"
-	if ! cat "$rej" | sed -e "/^diff a/a--- a/$file\n+++ b/$file" | \
+	if ! sed -e "/^diff a/a--- a/$file\n+++ b/$file" "$rej" | \
 	     git apply "$@" -; then
 		continue
 	fi
