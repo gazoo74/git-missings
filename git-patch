@@ -234,6 +234,22 @@ next() {
 commit() {
 	local GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 
+	if [ "$(git status --porcelain --untracked-files=no | wc -l)" -eq 0 ]; then
+		local msg
+		msg="$(head -n1 .git/patch-apply/final-commit)"
+		cat <<EOF
+Applying: $msg
+No changes - did you forget to use 'git add'?
+If there is nothing left to stage, chances are that something else
+already introduced the same changes; you might want to skip this patch.
+When you have resolved this problem, run "git patch --continue".
+If you prefer to skip this patch, run "git patch --skip" instead.
+To restore the original branch and stop patching, run "git patch --abort".
+EOF
+
+		exit 1
+	fi
+
 	# shellcheck disable=SC1091
 	. "$gitdir/patch-apply/author-script"
 
