@@ -142,26 +142,26 @@ sanitized_diff_commit_message() {
 }
 
 index_to_filename() {
-	sed -n "$gitdir/patch-apply/todo" \
+	sed -n "$gitapplydir/todo" \
 	    -e "$1p"
 }
 
 get_patched_files() {
 	# Applied patch path/to/file cleanly.
 	sed -n '/^Applied patch /s,Applied patch \(.*\) cleanly.$,\1,p' \
-	    "$gitdir/patch-apply/applying"
+	    "$gitapplydir/applying"
 }
 
 get_reject_files() {
 	# Applying patch path/to/file with x reject[s]...
 	sed -n '/Applying patch /s,Applying patch \(.*\) with [0-9]* rejects\?...$,\1.rej,p' \
-	    "$gitdir/patch-apply/applying"
+	    "$gitapplydir/applying"
 }
 
 get_unpatched_files() {
 	# error: path/to/file: does not [exist in|match] index
 	sed -n '/error: /s,^error: \(.*\): does not \(exist in\|match\) index$,\1,p' \
-	    "$gitdir/patch-apply/applying"
+	    "$gitapplydir/applying"
 }
 
 get_unpatched_rejects() {
@@ -213,11 +213,11 @@ saving_unpatched_files_to_rej() {
 	while read -r f; do
 		mkdir -p "${f%/*}"
 		sed -n "\:--- a/$f:,/--- a/p" \
-		    "$gitdir/patch-apply/patch" \
+		    "$gitapplydir/patch" \
 		    >"$f.rej"
 #
 #		sed -n '/^[0-9]* out of [0-9]* hunks ignored/'"s,$, -- saving rejects to file $f.rej,p" \
-#		    "$gitdir/patch-apply/applying
+#		    "$gitapplydir/applying
 	done
 }
 
@@ -227,10 +227,10 @@ remove_all_artifacts() {
 
 next() {
 	next="$((next + 1))"
-	echo "$next" >"$gitdir/patch-apply/next"
-	rm -f "$gitdir/patch-apply/patch" \
-	      "$gitdir/patch-apply/final-commit" \
-	      "$gitdir/patch-apply/applying"
+	echo "$next" >"$gitapplydir/next"
+	rm -f "$gitapplydir/patch" \
+	      "$gitapplydir/final-commit" \
+	      "$gitapplydir/applying"
 }
 
 commit() {
@@ -238,7 +238,7 @@ commit() {
 
 	if [ "$(git status --porcelain --untracked-files=no | wc -l)" -eq 0 ]; then
 		local msg
-		msg="$(head -n1 "$gitdir/patch-apply/final-commit")"
+		msg="$(head -n1 "$gitapplydir/final-commit")"
 		cat <<EOF
 Applying: $msg
 No changes - did you forget to use 'git add'?
@@ -253,13 +253,13 @@ EOF
 	fi
 
 	# shellcheck disable=SC1091
-	. "$gitdir/patch-apply/author-script"
+	. "$gitapplydir/author-script"
 
 	# shellcheck disable=SC2086
 	GIT_AUTHOR_NAME="${GIT_AUTHOR_NAME:-$(git config --get user.name)}" \
 	GIT_AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL:-$(git config --get user.email)}" \
 	GIT_AUTHOR_DATE="${GIT_AUTHOR_DATE:-$(date --rfc-email)}" \
-	git commit $COMMITOPTS --file "$gitdir/patch-apply/final-commit" "$@"
+	git commit $COMMITOPTS --file "$gitapplydir/final-commit" "$@"
 }
 
 edit_commit() {
@@ -279,7 +279,7 @@ status_patch() {
 	    -e '/^-- $/,$d' \
 	    -e '/^diff /d' \
 	    -e '/^index /d' \
-	    "$gitdir/patch-apply/patch"
+	    "$gitapplydir/patch"
 }
 
 diff_tool() {
@@ -423,16 +423,16 @@ patch() {
 	if [ -n "$subject" ]; then
 		# patch is in mailbox format
 		msg="$(sanitized_mailbox_subject "$subject")"
-		extract_mailbox_commit_message "$1" >"$gitdir/patch-apply/msg"
-		extract_mailbox_patch "$1" >"$gitdir/patch-apply/patch"
-		extract_mailbox_info "$1" >"$gitdir/patch-apply/info"
-		extract_mailbox_author_script "$1" >"$gitdir/patch-apply/author-script"
+		extract_mailbox_commit_message "$1" >"$gitapplydir/msg"
+		extract_mailbox_patch "$1" >"$gitapplydir/patch"
+		extract_mailbox_info "$1" >"$gitapplydir/info"
+		extract_mailbox_author_script "$1" >"$gitapplydir/author-script"
 	else
 		# patch is a diff format
 		msg="$(sanitized_diff_commit_message "$filename")"
-		extract_diff_commit_message "$1" >"$gitdir/patch-apply/msg"
-		cp "$1" "$gitdir/patch-apply/patch"
-		cat <<EOF >"$gitdir/patch-apply/author-script"
+		extract_diff_commit_message "$1" >"$gitapplydir/msg"
+		cp "$1" "$gitapplydir/patch"
+		cat <<EOF >"$gitapplydir/author-script"
 GIT_AUTHOR_NAME='${GIT_AUTHOR_NAME:-$(git config --get user.name)}'
 GIT_AUTHOR_EMAIL='${GIT_AUTHOR_EMAIL:-$(git config --get user.email)}'
 GIT_AUTHOR_DATE='${GIT_AUTHOR_DATE:-$(date --rfc-email)}'
@@ -440,7 +440,7 @@ EOF
 	fi
 
 	# final-commit contains the commit message
-	cat - "$gitdir/patch-apply/msg" <<EOF >"$gitdir/patch-apply/final-commit"
+	cat - "$gitapplydir/msg" <<EOF >"$gitapplydir/final-commit"
 $msg
 
 EOF
@@ -449,7 +449,7 @@ EOF
 
 	# shellcheck disable=SC2086
 	if git apply $APPLYOPTS "$1" 2>&1 | \
-	   tee "$gitdir/patch-apply/applying" >&2; then
+	   tee "$gitapplydir/applying" >&2; then
 		commit
 		return
 	fi
@@ -475,7 +475,7 @@ EOF
 
 action_continue() {
 	# No patch in progress... keep going
-	if [ ! -f "$gitdir/patch-apply/patch" ]; then
+	if [ ! -f "$gitapplydir/patch" ]; then
 		fatal "No apply in progress?"
 		return
 	fi
@@ -484,7 +484,7 @@ action_continue() {
 }
 
 resolved() {
-	if [ ! -f "$gitdir/patch-apply/patch" ]; then
+	if [ ! -f "$gitapplydir/patch" ]; then
 		fatal "No ad in progress?"
 	fi
 
@@ -501,12 +501,12 @@ action_skip() {
 
 action_abort() {
 	# Reset current patchset
-	abort_safety="$(cat "$gitdir/patch-apply/abort-safety")"
+	abort_safety="$(cat "$gitapplydir/abort-safety")"
 	git clean -xdf
 	git reset --hard "$abort_safety"
 
 	# Remove context
-	rm -rf "$gitdir/patch-apply/"
+	rm -rf "$gitapplydir/"
 }
 
 action_status() {
@@ -520,7 +520,7 @@ action_resolve() {
 }
 
 action_show-current-patch() {
-	cat "$gitdir/patch-apply/patch"
+	cat "$gitapplydir/patch"
 }
 
 usage() {
@@ -547,6 +547,7 @@ EOF
 
 __git_find_repo_path
 gitdir="$__git_repo_path"
+gitapplydir="$gitapplydir/patch-apply"
 
 t() {
 	true
@@ -623,62 +624,62 @@ done
 # First form [(<mbox> | <unified>)...]
 if [ -z "$ACTION" ]; then
 	# Make sure there is no apply-mbox in progress
-	for dir in "$gitdir/rebase-apply" "$gitdir/patch-apply"; do
+	for dir in "$gitdir/rebase-apply" "$gitapplydir"; do
 		if [ -d "$dir" ]; then
 			fatal "previous rebase directory $dir still exists but patch given."
 		fi
 	done
 
 	# Setup context
-	mkdir "$gitdir/patch-apply/"
+	mkdir "$gitapplydir/"
 
-	git rev-parse HEAD >"$gitdir/patch-apply/abort-safety"
+	git rev-parse HEAD >"$gitapplydir/abort-safety"
 
 	if [ "$#" -eq 0 ]; then
 		next="$((next+1))"
 		index="$(printf "%04i" "$next")"
-		cat - >"$gitdir/patch-apply/$index"
+		cat - >"$gitapplydir/$index"
 		echo "stdin"
 	else
 		for patch in "$@"; do
 			next="$((next+1))"
 			index="$(printf "%04i" "$next")"
-			cp "$patch" "$gitdir/patch-apply/$index"
+			cp "$patch" "$gitapplydir/$index"
 			echo "${patch##*/}"
 		done
-	fi >"$gitdir/patch-apply/todo"
+	fi >"$gitapplydir/todo"
 
 	last="$next"
-	echo "$last" >"$gitdir/patch-apply/last"
+	echo "$last" >"$gitapplydir/last"
 
 	next="1"
-	echo "$next" >"$gitdir/patch-apply/next"
+	echo "$next" >"$gitapplydir/next"
 
-	echo "$AUTORESOLVE" >"$gitdir/patch-apply/autoresolve"
-	echo "$SIGN" >"$gitdir/patch-apply/sign"
-	echo "$THREEWAY" >"$gitdir/patch-apply/threeway"
-	echo "$UTF8" >"$gitdir/patch-apply/utf8"
-	echo "$KEEP" >"$gitdir/patch-apply/keep"
-	echo "$MESSAGEID" >"$gitdir/patch-apply/messageid"
-	echo "$SCISSORS" >"$gitdir/patch-apply/scissors"
-	echo "$QUIET" >"$gitdir/patch-apply/quiet"
+	echo "$AUTORESOLVE" >"$gitapplydir/autoresolve"
+	echo "$SIGN" >"$gitapplydir/sign"
+	echo "$THREEWAY" >"$gitapplydir/threeway"
+	echo "$UTF8" >"$gitapplydir/utf8"
+	echo "$KEEP" >"$gitapplydir/keep"
+	echo "$MESSAGEID" >"$gitapplydir/messageid"
+	echo "$SCISSORS" >"$gitapplydir/scissors"
+	echo "$QUIET" >"$gitapplydir/quiet"
 # Second form (--continue | --skip | --abort)
 else
-	if [ ! -d "$gitdir/patch-apply" ]; then
+	if [ ! -d "$gitapplydir" ]; then
 		fatal "Resolve operation not in progress, we are not resuming."
 	fi
 
-	next="$(cat "$gitdir/patch-apply/next")"
-	last="$(cat "$gitdir/patch-apply/last")"
+	next="$(cat "$gitapplydir/next")"
+	last="$(cat "$gitapplydir/last")"
 
-	AUTORESOLVE="$(cat "$gitdir/patch-apply/autoresolve" || echo "f")"
-	SIGN="$(cat "$gitdir/patch-apply/sign" || echo "f")"
-	THREEWAY="$(cat "$gitdir/patch-apply/threeway" || echo "t")"
-	UTF8="$(cat "$gitdir/patch-apply/utf8" || echo "t")"
-	KEEP="$(cat "$gitdir/patch-apply/keep" || echo "f")"
-	MESSAGEID="$(cat "$gitdir/patch-apply/messageid" || echo "f")"
-	SCISSORS="$(cat "$gitdir/patch-apply/scissors" || echo "f")"
-	QUIET="$(cat "$gitdir/patch-apply/quiet" || echo "f")"
+	AUTORESOLVE="$(cat "$gitapplydir/autoresolve" || echo "f")"
+	SIGN="$(cat "$gitapplydir/sign" || echo "f")"
+	THREEWAY="$(cat "$gitapplydir/threeway" || echo "t")"
+	UTF8="$(cat "$gitapplydir/utf8" || echo "t")"
+	KEEP="$(cat "$gitapplydir/keep" || echo "f")"
+	MESSAGEID="$(cat "$gitapplydir/messageid" || echo "f")"
+	SCISSORS="$(cat "$gitapplydir/scissors" || echo "f")"
+	QUIET="$(cat "$gitapplydir/quiet" || echo "f")"
 fi
 
 if $SIGN; then
@@ -719,8 +720,8 @@ esac
 
 while [ "$next" -le "$last" ]; do
 	patch="$(printf "%04i" "$next")"
-	patch "$gitdir/patch-apply/$patch"
+	patch "$gitapplydir/$patch"
 	next
 done
 
-rm -rf "$gitdir/patch-apply"
+rm -rf "$gitapplydir"
