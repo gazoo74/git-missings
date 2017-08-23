@@ -543,7 +543,7 @@ EOF
 
 __git_find_repo_path
 gitdir="$__git_repo_path"
-gitapplydir="$gitdir/patch-apply"
+gitapplydir="$gitdir/rebase-apply"
 
 t() {
 	true
@@ -616,12 +616,10 @@ done
 
 # First form [(<mbox> | <unified>)...]
 if [ -z "$ACTION" ]; then
-	# Make sure there is no apply-mbox in progress
-	for dir in "$gitdir/rebase-apply" "$gitapplydir"; do
-		if [ -d "$dir" ]; then
-			fatal "previous rebase directory $dir still exists but patch given."
-		fi
-	done
+	# Make sure there is no apply in progress
+	if [ -d "$gitapplydir" ]; then
+		fatal "previous rebase directory $gitapplydir still exists but patch given."
+	fi
 
 	# Setup context
 	mkdir "$gitapplydir/"
