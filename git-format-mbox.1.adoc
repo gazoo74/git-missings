@@ -1,0 +1,48 @@
+= git-format-mbox(1)
+:doctype: manpage
+:author: Gaël PORTAY
+:email: gael.portay@savoirfairelinux.com
+:lang: en
+:man manual: The Missing Git Commands Manual
+:man source: The Missing Git Commands Project
+
+== NAME
+
+git-format-mbox - Format e-mail to ready-to-commit patches
+
+== SYNOPSIS
+
+*git-format-mbox* [<mbox>...]
+
+== DESCRIPTION
+
+Reads the supplied mailbox and formats it into patches.
+
+When a mailbox is supplied, this command formats the message into a
+read-to-commit patch.
+
+== OPTIONS
+
+(<mbox>...)::
+    The list of mailbox files to read from. If you do not supply this argument,
+    the command reads from the standard input.
+
+== BUGS
+
+Report bugs at *https://github.com/gazoo74/git-missings/issues*
+
+== AUTHOR
+
+Written by Gaël PORTAY *gael.portay@savoirfairelinux.com*
+
+== COPYRIGHT
+
+Copyright (c) 2017 Gaël PORTAY
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3.
+
+== SEE ALSO
+
+git-am(1)
