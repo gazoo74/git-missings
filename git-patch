@@ -502,51 +502,6 @@ action_status() {
 	status_patch |
 	diff -ud --label "patch" --label "cached" --color \
 	     - <(status_cached) || true
-
-#On branch test
-#Your branch is ahead of 'origin/release/qcomlt-4.9' by 1 commit.
-#  (use "git push" to publish your local commits)
-#Changes to be committed:
-#  (use "git reset HEAD <file>..." to unstage)
-#
-#	modified:   arch/arm64/boot/dts/qcom/pm8916.dtsi
-#
-#Untracked files:
-#  (use "git add <file>..." to include in what will be committed)
-#
-#	drivers/power/qcom_smbb.c.rej
-#	drivers/power/supply/qcom_smbb.c.rej
-
-	echo
-
-	cat <<EOF
-Rejected hunks:
-  (use "git patch HEAD <file>..." to unstage)
-EOF
-	echo -e "\e[32m"
-	get_reject_files | \
-	while read -r rej; do
-		[ -e "$rej" ] || continue
-		echo "$rej"
-	done | \
-	echo -e "\e[0m"
-
-	cat <<EOF
-Unpatched files:
-  (use "git patch HEAD <file>..." to unstage)
-EOF
-	echo -e "\e[31m"
-	get_unpatched_rejects | \
-	while read -r rej; do
-		[ -e "$rej" ] || continue
-		if [ -L "$rej" ]; then
-			echo "$rej -> $(readlink "$rej")"
-		else
-			echo "$rej"
-		fi
-	done | \
-	sed -e 's,^,\t,'
-	echo -e "\e[0m"
 }
 
 action_resolve() {
