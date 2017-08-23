@@ -9,14 +9,14 @@
 PREFIX ?= /usr/local
 
 .PHONY: all
-all: git-patch.1.gz
+all: man
 
 .PHONY: man
-man: git-patch.1.gz
+man: git-patch.1.gz git-format-mbox.1.gz
 
 .PHONY: check
-check:
-	shellcheck git-patch
+check: git-patch git-format-mbox
+	shellcheck $^
 
 .PHONY: alias
 alias:
@@ -57,18 +57,24 @@ install-bash-completion:
 		install -d $(DESTDIR)$$completionsdir/; \
 		install -m 644 bash-completion/git-patch \
 			       $(DESTDIR)$$completionsdir/; \
+		install -m 644 bash-completion/git-format-mbox \
+			       $(DESTDIR)$$completionsdir/; \
 	fi
 
 .PHONY: uninstall
 uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/bin/git-patch
+	rm -rf $(DESTDIR)$(PREFIX)/bin/git-format-mbox
 	rm -rf $(DESTDIR)$(PREFIX)/lib/git-patch
+	rm -rf $(DESTDIR)$(PREFIX)/lib/git-format-mbox
 	rm -rf $(DESTDIR)$(PREFIX)/share/man/man1/git-patch.1.gz
+	rm -rf $(DESTDIR)$(PREFIX)/share/man/man1/git-format-mbox.1.gz
 
 .PHONY: uninstall-bash-completion
 uninstall-bash-completion:
 	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
 	rm -f $(DESTDIR)$$completionsdir/git-patch
+	rm -f $(DESTDIR)$$completionsdir/git-format-mbox
 
 .PHONY: tests
 tests:
@@ -78,6 +84,7 @@ tests:
 clean:
 	$(MAKE) -sC tests clean
 	rm -f git-patch.1.gz
+	rm -f git-format-mbox.1.gz
 
 %.1: %.1.adoc
 	asciidoctor -b manpage -o $@ $<
