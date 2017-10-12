@@ -70,6 +70,10 @@ uninstall-bash-completion:
 	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
 	rm -f $(DESTDIR)$$completionsdir/git-patch
 
+.PHONY: user-install
+user-install:
+	$(MAKE) install PREFIX=$$HOME/.local
+
 .PHONY: tests
 tests:
 	$(MAKE) -sC $@
