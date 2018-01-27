@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Gaël PORTAY <gael.portay@savoirfairelinux.com>
+# Copyright (c) 2017-2018 Gaël PORTAY <gael.portay@savoirfairelinux.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # the terms of the GNU General Public License as published by
@@ -26,13 +26,19 @@ alias:
 	git config --global alias.fixup '!f() { git commit --fixup=$${1:-HEAD}; }; f'
 	git config --global alias.autosquash 'rebase -i --autosquash --autostash'
 	git config --global alias.upstream 'rev-parse --abbrev-ref --symbolic-full-name @{u}'
+	git config --global alias.oneline 'log --oneline'
+	git config --global alias.k 'log --graph --oneline'
 	git config --global alias.graph 'log --graph --oneline --decorate'
 	git config --global alias.ahead '!f() { br="$$(git upstream)"; git graph $${br:+$$br..}$${1:-HEAD}; }; f'
+	git config --global alias.amend 'commit --amend'
+	git config --global alias.sign-off 'commit --amend --signoff'
+	git config --global alias.unstage 'reset HEAD --'
 
 .PHONY: variables
 variables:
 	git config --global rebase.autoStash true
 	git config --global pull.rebase true
+	git config --global status.short true
 
 .PHONY: install
 install:
