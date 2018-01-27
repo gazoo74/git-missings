@@ -33,6 +33,7 @@ alias:
 	git config --global alias.amend 'commit --amend'
 	git config --global alias.sign-off 'commit --amend --signoff'
 	git config --global alias.unstage 'reset HEAD --'
+	git config --global alias.autoresolve 'patch --autoresolve'
 
 .PHONY: variables
 variables:
