@@ -52,7 +52,9 @@ install:
 
 .PHONY: install-bash-completion
 install-bash-completion:
-	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
+	completionsdir="$$(pkg-config --define-variable=prefix=$(PREFIX) \
+	                              --variable=completionsdir \
+	                              bash-completion)"; \
 	if [ -n "$$completionsdir" ]; then \
 		install -d $(DESTDIR)$$completionsdir/; \
 		install -m 644 bash-completion/git-patch \
@@ -67,8 +69,12 @@ uninstall:
 
 .PHONY: uninstall-bash-completion
 uninstall-bash-completion:
-	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
-	rm -f $(DESTDIR)$$completionsdir/git-patch
+	completionsdir="$$(pkg-config --define-variable=prefix=$(PREFIX) \
+	                              --variable=completionsdir \
+	                              bash-completion)"; \
+	if [ -n "$$completionsdir" ]; then \
+		rm -f $(DESTDIR)$$completionsdir/git-patch; \
+	fi
 
 .PHONY: user-install
 user-install:
