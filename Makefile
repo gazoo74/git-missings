@@ -76,9 +76,9 @@ uninstall-bash-completion:
 		rm -f $(DESTDIR)$$completionsdir/git-patch; \
 	fi
 
-.PHONY: user-install
-user-install:
-	$(MAKE) install PREFIX=$$HOME/.local
+user-install user-install-bash-completion user-uninstall user-uninstall-bash-completion:
+user-%:
+	$(MAKE) $* PREFIX=$$HOME/.local
 
 .PHONY: tests
 tests:
