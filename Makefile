@@ -41,6 +41,9 @@ variables:
 	git config --global pull.rebase true
 	git config --global status.short true
 
+.PHONY: install-all
+install-all: install install-bash-completion
+
 .PHONY: install
 install:
 	install -d $(DESTDIR)$(PREFIX)/bin
@@ -75,6 +78,9 @@ uninstall-bash-completion:
 	if [ -n "$$completionsdir" ]; then \
 		rm -f $(DESTDIR)$$completionsdir/git-patch; \
 	fi
+
+.PHONY: user-install-all
+user-install-all: user-install user-install-bash-completion
 
 user-install user-install-bash-completion user-uninstall user-uninstall-bash-completion:
 user-%:
