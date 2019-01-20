@@ -34,6 +34,10 @@ alias:
 	git config --global alias.sign-off 'commit --amend --signoff'
 	git config --global alias.unstage 'reset HEAD --'
 	git config --global alias.autoresolve 'patch --autoresolve'
+	git config --global alias.reword 'commit --amend'
+	git config --global alias.author 'commit --amend --author "Gaël PORTAY <gael.portay@savoirfairelinux.com>"'
+	git config --global alias.sign-off 'commit --amend --signoff'
+	git config --global alias.unstage 'reset HEAD --'
 
 .PHONY: variables
 variables:
