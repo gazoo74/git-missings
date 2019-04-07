@@ -1,9 +1,7 @@
 #
 # Copyright (c) 2017 Gaël PORTAY <gael.portay@savoirfairelinux.com>
 #
-# This program is free software: you can redistribute it and/or modify
-# the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3.
+# SPDX-License-Identifier: GPL-3.0
 #
 
 include $(TOPDIR)/target/linux/$(TARGET)/Makefile
