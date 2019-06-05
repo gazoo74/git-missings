@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Gaël PORTAY <gael.portay@savoirfairelinux.com>
+# Copyright (c) 2017 Gaël PORTAY <gael.portay@gmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0
 #
