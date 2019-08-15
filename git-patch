@@ -411,6 +411,8 @@ usage: git patch [<options>] [(<mbox> | <unified>)...]
         --continue        continue applying patches after resolving a conflict
         --skip            skip the current patch
         --abort           restore the original branch and abort the patching operation.
+        --status          compare original patch to patching operation
+        --resolve         try to automatically resolve rejected hunks
         --show-current-patch
                           show the patch being applied.
     -s, --signoff         add a Signed-off-by line to the commit message
