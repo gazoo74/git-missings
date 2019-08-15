@@ -17,6 +17,10 @@ fatal() {
 	exit 1
 }
 
+hint() {
+	echo -e "\e[33mhint: $*\e[0m" >&2
+}
+
 extract_mailbox_header() {
 	sed -e '/^$/,$d' \
 	    "$1"
@@ -347,8 +351,8 @@ EOF
 		return
 	fi
 
+	hint "Use 'git patch --show-current-patch' to see the failed patch"
 	cat <<EOF
-hint: Use 'git patch --show-current-patch' to see the failed patch
 When you have resolved this problem, run "git patch --continue".
 If you prefer to skip this patch, run "git patch --skip" instead.
 To restore the original branch and stop patching, run "git patch --abort".
