@@ -41,6 +41,9 @@ variables:
 	git config --global pull.rebase true
 	git config --global status.short true
 
+.PHONY: install-all
+install-all: install install-bash-completion
+
 .PHONY: install
 install:
 	install -d $(DESTDIR)$(PREFIX)/bin
@@ -52,7 +55,9 @@ install:
 
 .PHONY: install-bash-completion
 install-bash-completion:
-	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
+	completionsdir="$${BASHCOMPLETIONSDIR:-$$(pkg-config --define-variable=prefix=$(PREFIX) \
+	                                                     --variable=completionsdir \
+	                                                     bash-completion)}"; \
 	if [ -n "$$completionsdir" ]; then \
 		install -d $(DESTDIR)$$completionsdir/; \
 		install -m 644 bash-completion/git-patch \
@@ -67,8 +72,19 @@ uninstall:
 
 .PHONY: uninstall-bash-completion
 uninstall-bash-completion:
-	completionsdir="$$(pkg-config --variable=completionsdir bash-completion)"; \
-	rm -f $(DESTDIR)$$completionsdir/git-patch
+	completionsdir="$${BASHCOMPLETIONSDIR:-$$(pkg-config --define-variable=prefix=$(PREFIX) \
+	                                                     --variable=completionsdir \
+	                                                     bash-completion)}"; \
+	if [ -n "$$completionsdir" ]; then \
+		rm -f $(DESTDIR)$$completionsdir/git-patch; \
+	fi
+
+.PHONY: user-install-all
+user-install-all: user-install user-install-bash-completion
+
+user-install user-install-bash-completion user-uninstall user-uninstall-bash-completion:
+user-%:
+	$(MAKE) $* PREFIX=$$HOME/.local BASHCOMPLETIONSDIR=$$HOME/.local/share/bash-completion/completions
 
 .PHONY: tests
 tests:
