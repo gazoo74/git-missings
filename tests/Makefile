@@ -1,9 +1,7 @@
 #
-# Copyright (c) 2017 Gaël PORTAY <gael.portay@savoirfairelinux.com>
+# Copyright (c) 2017 Gaël PORTAY
 #
-# This program is free software: you can redistribute it and/or modify
-# the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3.
+# SPDX-License-Identifier: GPL-3.0
 #
 
 .PHONY: all
@@ -45,7 +43,7 @@ linux-ramips/.git/logs/refs/heads/testing: | linux-ramips/.git/logs/refs/heads/r
 	( cd linux-ramips/ && git checkout -b testing master )
 
 0.5.tar.gz:
-	wget https://github.com/gazoo74/openwrt/archive/$@
+	wget https://github.com/gportay/openwrt/archive/$@
 
 openwrt-0.5/Makefile: | 0.5.tar.gz
 	tar xzf 0.5.tar.gz
