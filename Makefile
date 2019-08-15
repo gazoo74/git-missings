@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017-2018 Gaël PORTAY
+# Copyright (c) 2017-2019 Gaël PORTAY
 #
 # SPDX-License-Identifier: GPL-3.0
 #

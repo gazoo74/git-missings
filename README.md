@@ -31,7 +31,7 @@ git-ahead(1) - Show ahead commits
 
 ## COPYRIGHT
 
-Copyright (c) 2017 Gaël PORTAY
+Copyright (c) 2017, 2019 Gaël PORTAY
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

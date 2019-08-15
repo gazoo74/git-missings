@@ -492,7 +492,7 @@ if [ -z "$ACTION" ]; then
 		next="$((next+1))"
 		index="$(printf "%04i" "$next")"
 		cat - >".git/patch-apply/$index"
-		echo "${patch##*/}"
+		echo "stdin"
 	else
 		for patch in "$@"; do
 			next="$((next+1))"
