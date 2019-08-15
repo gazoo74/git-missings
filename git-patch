@@ -348,7 +348,7 @@ EOF
 	fi
 
 	cat <<EOF
-The copy of the patch that failed is found in: .git/patch-apply/patch"
+hint: Use 'git patch --show-current-patch' to see the failed patch
 When you have resolved this problem, run "git patch --continue".
 If you prefer to skip this patch, run "git patch --skip" instead.
 To restore the original branch and stop patching, run "git patch --abort".
@@ -394,12 +394,18 @@ action_resolve() {
 	autoresolve
 }
 
+action_show-current-patch() {
+	cat .git/patch-apply/patch
+}
+
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
-   or: git patch (--continue | --skip | --abort | --status | --resolve)
+   or: git patch (--continue | --skip | --abort | --status | --resolve | --show-current-patch)
 
         --autoresolve     try to auto-resolve rejects
+        --show-current-patch
+                          show the patch being applied.
     -s, --signoff         add a Signed-off-by line to the commit message
     -3, --3way            attempt three-way merge if a patch does not apply
         --no-utf8         no recode into utf8
@@ -464,6 +470,9 @@ while [ $# -ne 0 ]; do
 		break
 	elif [ "$1" = "--resolve" ]; then
 		ACTION="resolve"
+		break
+	elif [ "$1" = "--show-current-patch" ]; then
+		ACTION="show-current-patch"
 		break
 	elif [ "$1" = "--" ]; then
 		shift
@@ -560,12 +569,12 @@ else
 	APPLYOPTS+=" --verbose"
 fi
 
-# Second form (--continue | --skip | --abort | --status | --resolve)
+# Second form (--continue | --skip | --abort | --status | --resolve | --show-current-patch)
 case "$ACTION" in
 continue|skip)
 	"action_$ACTION"
 	;;
-abort|status|resolve)
+abort|status|resolve|show-current-patch)
 	"action_$ACTION"
 	exit
 	;;

@@ -15,7 +15,8 @@ git-patch - Apply a series of patches
 *git-patch* [--autoresolve] [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
 [--scissors] [(<mbox> | <unified>)...]
 
-*git-patch* (--continue | --skip | --abort | --status | --resolve)
+*git-patch* (--continue | --skip | --abort | --status | --resolve |
+--show-current-patch)
 
 == DESCRIPTION
 
@@ -90,6 +91,10 @@ leave the rejected hunks in corresponding *.rej files.
 
 --resolve::
     Try to automatically resolve rejected hunks. See --autoresolve option.
+
+--show-current-patch::
+	Show the patch being applied when "git am" is stopped because of
+	conflicts.
 
 == HOOKS
 

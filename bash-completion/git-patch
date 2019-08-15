@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2017-2018 Gaël PORTAY
+# Copyright (c) 2017-2019 Gaël PORTAY
 #
 # SPDX-License-Identifier: GPL-3.0
 #
@@ -9,7 +9,7 @@ _git_patch() {
 	local cur prev words cword
 	_init_completion || return
 
-	local opts="--continue --skip --abort --status --resolve --help"
+	local opts="--continue --skip --abort --status --resolve --show-current-patch --help"
 	if [[ -d .git/patch-apply ]]; then
 		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 		return
