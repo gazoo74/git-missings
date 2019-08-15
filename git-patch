@@ -97,8 +97,8 @@ get_reject_files() {
 }
 
 get_unpatched_files() {
-	# error: path/to/file: does not exist in index
-	sed -n '/error: /s,^error: \(.*\): does not exist in index$,\1,p' \
+	# error: path/to/file: does not [exist in|match] index
+	sed -n '/error: /s,^error: \(.*\): does not \(exist in\|match\) index$,\1,p' \
 	    .git/patch-apply/applying
 }
 
