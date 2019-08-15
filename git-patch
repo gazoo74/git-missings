@@ -720,7 +720,8 @@ action_show-current-patch() {
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
-   or: git patch (--continue | --skip | --abort | --quit | --status | --resolve | --resolved | --show-current-patch)
+   or: git patch [<options>] --series [<series>...]
+   or: git patch (--continue | --skip | --abort | --quit | --status | --resolve | --show-current-patch | --show-remaining-rejects)
 
         --autoresolve     try to auto-resolve rejects
         --continue        continue applying patches after resolving a conflict
@@ -737,6 +738,7 @@ usage: git patch [<options>] [(<mbox> | <unified>)...]
     -k, --keep            pass -k flag to git-mailinfo
     -m, --message-id      pass -m flag to git-mailinfo
     -c, --scissors        strip everything before a scissors line
+        --series          input is a serie of patches
     -q, --quiet           be quiet
 EOF
 }
@@ -765,6 +767,7 @@ KEEP="f"
 MESSAGEID="f"
 SCISSORS="f"
 QUIET="f"
+SERIES="f"
 while [ $# -ne 0 ]; do
 	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 		usage
@@ -785,6 +788,8 @@ while [ $# -ne 0 ]; do
 		SCISSORS="t"
 	elif [ "$1" = "-q" ] || [ "$1" = "--quiet" ]; then
 		QUIET="t"
+	elif [ "$1" = "--series" ]; then
+		SERIES="t"
 	elif [ "$1" = "--continue" ]; then
 		ACTION="continue"
 		break
@@ -818,7 +823,7 @@ while [ $# -ne 0 ]; do
 	shift
 done
 
-# First form [(<mbox> | <unified>)...]
+# First form [(<mbox> | <unified>)...] or [<series>...]
 if [ -z "$ACTION" ]; then
 	# Make sure there is no apply-mbox in progress
 	for dir in "$gitdir/rebase-apply" "$gitdir/patch-apply"; do
@@ -832,7 +837,26 @@ if [ -z "$ACTION" ]; then
 
 	git rev-parse HEAD >"$gitpatchdir/abort-safety"
 
-	if [ "$#" -eq 0 ]; then
+	if $SERIES; then
+		for series in "${@:-/dev/stdin}"; do
+			while read -r patch; do
+				if ! [[ $patch ]] || [[ $patch =~ ^# ]]; then
+					continue
+				fi
+
+				next="$((next+1))"
+				index="$(printf "%04i" "$next")"
+				dir="${series%/*}"
+				if [[ "$series" =~ ^($dir|/dev/stdin|-)$ ]]; then
+					dir="."
+				fi
+
+				cp "$dir/$patch" ".git/patch-apply/$index"
+				echo "${patch##*/}"
+			done <"$series"
+		done
+		unset dir
+	elif [ "$#" -eq 0 ]; then
 		next="$((next+1))"
 		index="$(printf "%04i" "$next")"
 		cat - >"$gitpatchdir/$index"

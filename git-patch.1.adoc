@@ -15,6 +15,9 @@ git-patch - Apply a series of patches
 *git-patch* [--autoresolve] [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
 [--scissors] [(<mbox> | <unified>)...]
 
+*git-patch* [--autoresolve] [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
+[--scissors] --series [<serie>...]
+
 *git-patch* (--continue | --skip | --abort | --status | --resolve | --resolved |
 --show-current-patch)
 
@@ -38,6 +41,21 @@ leave the rejected hunks in corresponding *.rej files.
     Try to automatically resolve rejected hunks. First 3-way merges unpatched
     files; then applies rejects with a 2-lines context, and finally a
     single-line context.
+
+--series::
+	A file called series contains a list of patch file names that defines
+	the order in which patches are applied. Unless there are means by which
+	series files can be generated automatically, it is usually provided
+	along with a set of patches. In this file, each patch file name is on a
+	separate line. Patch files are identified by pathnames that are
+	relative to the patches directory; patches may be in sub-directories
+	below this directory.  Lines in the series file that start with a hash
+	character (#) are ignored. You can also add a comment after each patch
+	file name, introduced by a space followed by a hash character. When
+	quilt adds, removes, or renames patches, it automatically updates the
+	series file. Users of quilt can modify series files while some patches
+	are applied, as long as the applied patches remain in their original
+	order.
 
 -s, --signoff::
     Add a Signed-off-by: line to the commit message, using the committer
