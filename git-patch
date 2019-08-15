@@ -381,7 +381,7 @@ action_skip() {
 action_abort() {
 	# Reset current patchset
 	abort_safety="$(cat .git/patch-apply/abort-safety)"
-	git clean -xdf
+	remove_all_artifacts
 	git reset --hard "$abort_safety"
 
 	# Remove context
