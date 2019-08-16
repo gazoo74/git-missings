@@ -179,6 +179,12 @@ check_for_artifacts() {
 	check_for_unpatched_files
 }
 
+check_for_diff() {
+	status_patch_changes_only |
+	diff -ud --label "patch" --label "cached" --color \
+	     - <(status_cached_changes_only)
+}
+
 add_patched_files_to_index() {
 	get_patched_files | \
 	while read -r f; do
@@ -233,12 +239,22 @@ status_cached() {
 	git diff --cached | sed -e '/^diff /d' -e '/^index /d'
 }
 
+status_cached_changes_only() {
+	status_cached | \
+	sed -e '/^\(@@\| \)/d'
+}
+
 status_patch() {
 	sed -e '1,/^diff/d' \
 	    -e '/^-- $/,$d' \
 	    -e '/^diff /d' \
 	    -e '/^index /d' \
 	    .git/patch-apply/patch
+}
+
+status_patch_changes_only() {
+	status_patch | \
+	sed -e '/^\(@@\| \)/d'
 }
 
 resolve_unpatched() {
@@ -399,6 +415,9 @@ action_continue() {
 
 	$QUIET || echo "Applying: $(head -n1 .git/patch-apply/final-commit)"
 	check_for_artifacts
+	if ! check_for_diff; then
+		echo "Warning: changes are not rigorously identical!" >&2
+	fi
 
 	edit_commit
 	next
