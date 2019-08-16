@@ -23,7 +23,7 @@ oops() {
 
 	trap - 0
 
-	hint="Use 'rm -Rf .git/patch-apply/' to abort and keep HEAD where it is"
+	hint="Use 'git patch --quit' to abort and keep HEAD where it is"
 	if abort_safety="$(cat .git/patch-apply/abort-safety 2>/dev/null)"; then
 		hint+="\n      or 'git reset --hard $abort_safety' to restore the original branch and abort the patching operation"
 	fi
@@ -402,6 +402,10 @@ action_abort() {
 	trap - 0
 
 	# Remove context
+	action_quit
+}
+
+action_quit() {
 	rm -rf .git/patch-apply/
 }
 
@@ -422,12 +426,13 @@ action_show-current-patch() {
 usage() {
 	cat <<EOF
 usage: git patch [<options>] [(<mbox> | <unified>)...]
-   or: git patch (--continue | --skip | --abort | --status | --resolve | --show-current-patch)
+   or: git patch (--continue | --skip | --abort | --quit | --status | --resolve | --show-current-patch)
 
         --autoresolve     try to auto-resolve rejects
         --continue        continue applying patches after resolving a conflict
         --skip            skip the current patch
         --abort           restore the original branch and abort the patching operation.
+        --quit            abort the patching operation but keep HEAD where it is.
         --status          compare original patch to patching operation
         --resolve         try to automatically resolve rejected hunks
         --show-current-patch
@@ -491,6 +496,9 @@ while [ $# -ne 0 ]; do
 	elif [ "$1" = "--abort" ]; then
 		ACTION="abort"
 		break
+	elif [ "$1" = "--quit" ]; then
+		ACTION="quit"
+		break
 	elif [ "$1" = "--status" ]; then
 		ACTION="status"
 		break
@@ -551,25 +559,27 @@ if [ -z "$ACTION" ]; then
 	echo "$MESSAGEID" >.git/patch-apply/messageid
 	echo "$SCISSORS" >.git/patch-apply/scissors
 	echo "$QUIET" >.git/patch-apply/quiet
-# Second form (--continue | --skip | --abort)
+# Second form (--continue | --skip | --abort | --quit)
 else
 	if [ ! -d .git/patch-apply ]; then
 		fatal "Resolve operation not in progress, we are not resuming."
 	fi
 
-	trap 'oops "The impossible happened! Cannot recover :("' 0
-	next="$(cat .git/patch-apply/next)"
-	last="$(cat .git/patch-apply/last)"
-	trap - 0
+	if [ "$ACTION" != "quit" ]; then
+		trap 'oops "The impossible happened! Cannot recover :("' 0
+		next="$(cat .git/patch-apply/next)"
+		last="$(cat .git/patch-apply/last)"
+		trap - 0
 
-	AUTORESOLVE="$(cat .git/patch-apply/autoresolve || echo "f")"
-	SIGN="$(cat .git/patch-apply/sign || echo "f")"
-	THREEWAY="$(cat .git/patch-apply/threeway || echo "t")"
-	UTF8="$(cat .git/patch-apply/utf8 || echo "t")"
-	KEEP="$(cat .git/patch-apply/keep || echo "f")"
-	MESSAGEID="$(cat .git/patch-apply/messageid || echo "f")"
-	SCISSORS="$(cat .git/patch-apply/scissors || echo "f")"
-	QUIET="$(cat .git/patch-apply/quiet || echo "f")"
+		AUTORESOLVE="$(cat .git/patch-apply/autoresolve || echo "f")"
+		SIGN="$(cat .git/patch-apply/sign || echo "f")"
+		THREEWAY="$(cat .git/patch-apply/threeway || echo "t")"
+		UTF8="$(cat .git/patch-apply/utf8 || echo "t")"
+		KEEP="$(cat .git/patch-apply/keep || echo "f")"
+		MESSAGEID="$(cat .git/patch-apply/messageid || echo "f")"
+		SCISSORS="$(cat .git/patch-apply/scissors || echo "f")"
+		QUIET="$(cat .git/patch-apply/quiet || echo "f")"
+	fi
 fi
 
 if $SIGN; then
@@ -597,12 +607,12 @@ else
 	APPLYOPTS+=" --verbose"
 fi
 
-# Second form (--continue | --skip | --abort | --status | --resolve | --show-current-patch)
+# Second form (--continue | --skip | --abort | --quit | --status | --resolve | --show-current-patch)
 case "$ACTION" in
 continue|skip)
 	"action_$ACTION"
 	;;
-abort|status|resolve|show-current-patch)
+abort|quit|status|resolve|show-current-patch)
 	"action_$ACTION"
 	exit
 	;;

@@ -9,7 +9,7 @@ _git_patch() {
 	local cur prev words cword
 	_init_completion || return
 
-	local opts="--continue --skip --abort --status --resolve --show-current-patch --help"
+	local opts="--continue --skip --abort --quit --status --resolve --show-current-patch --help"
 	if [[ -d .git/patch-apply ]]; then
 		COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
 		return
