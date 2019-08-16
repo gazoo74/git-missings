@@ -304,7 +304,8 @@ resolve_unpatched() {
 		[ -e "$rej" ] || continue
 
 		oldfile="${rej%*.rej}"
-		while read -erp "File to patch for $oldfile: " patchfile; do
+		while read -erp "File to patch for $rej [$oldfile]: " patchfile; do
+			[ -n "$patchfile" ] || patchfile="$oldfile"
 			[ -n "$patchfile" ] || continue
 			if [ ! -e "$patchfile" ]; then
 				echo "Error: $patchfile: No such file!" >&2
