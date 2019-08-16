@@ -17,6 +17,21 @@ fatal() {
 	exit 1
 }
 
+oops() {
+	local abort_safety
+	local hint
+
+	trap - 0
+
+	hint="Use 'rm -Rf .git/patch-apply/' to abort and keep HEAD where it is"
+	if abort_safety="$(cat .git/patch-apply/abort-safety 2>/dev/null)"; then
+		hint+="\n      or 'git reset --hard $abort_safety' to restore the original branch and abort the patching operation"
+	fi
+	hint "$hint"
+	
+	fatal "${*:-Oops!}"
+}
+
 hint() {
 	echo -e "\e[33mhint: $*\e[0m" >&2
 }
@@ -380,9 +395,11 @@ action_skip() {
 
 action_abort() {
 	# Reset current patchset
+	trap 'oops "The impossible happened! Cannot recover :("' 0
 	abort_safety="$(cat .git/patch-apply/abort-safety)"
 	remove_all_artifacts
 	git reset --hard "$abort_safety"
+	trap - 0
 
 	# Remove context
 	rm -rf .git/patch-apply/
@@ -540,8 +557,10 @@ else
 		fatal "Resolve operation not in progress, we are not resuming."
 	fi
 
+	trap 'oops "The impossible happened! Cannot recover :("' 0
 	next="$(cat .git/patch-apply/next)"
 	last="$(cat .git/patch-apply/last)"
+	trap - 0
 
 	AUTORESOLVE="$(cat .git/patch-apply/autoresolve || echo "f")"
 	SIGN="$(cat .git/patch-apply/sign || echo "f")"
