@@ -36,6 +36,16 @@ hint() {
 	echo -e "\e[33mhint: $*\e[0m" >&2
 }
 
+hint_and_exit() {
+	hint "${*:-Use 'git patch --show-current-patch' to see the failed patch}"
+	cat <<EOF
+When you have resolved this problem, run "git patch --continue".
+If you prefer to skip this patch, run "git patch --skip" instead.
+To restore the original branch and stop patching, run "git patch --abort".
+EOF
+	exit 1
+}
+
 extract_mailbox_header() {
 	sed -e '/^$/,$d' \
 	    "$1"
@@ -138,7 +148,8 @@ check_for_rej_files() {
 	while read -r rej; do
 		if [ -e "$rej" ]; then
 			echo "Remaining reject artifact $rej!" >&2
-			exit 1
+			echo "Resolve the conflict first and remove the file then." >&2
+			hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
 		fi
 	done
 }
@@ -148,7 +159,8 @@ check_for_unpatched_files() {
 	while read -r f; do
 		if [ -e "$f.rej" ]; then
 			echo "Remaining unpatched artifact $f.rej!" >&2
-			exit 1
+			echo "Resolve the conflict first and remove the file then." >&2
+			hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
 		fi
 	done
 }
@@ -366,13 +378,7 @@ EOF
 		return
 	fi
 
-	hint "Use 'git patch --show-current-patch' to see the failed patch"
-	cat <<EOF
-When you have resolved this problem, run "git patch --continue".
-If you prefer to skip this patch, run "git patch --skip" instead.
-To restore the original branch and stop patching, run "git patch --abort".
-EOF
-	exit 1
+	hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
 }
 
 action_continue() {
@@ -382,6 +388,7 @@ action_continue() {
 		return
 	fi
 
+	$QUIET || echo "Applying: $(head -n1 .git/patch-apply/final-commit)"
 	check_for_artifacts
 
 	edit_commit
