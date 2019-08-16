@@ -156,6 +156,12 @@ check_for_rej_files() {
 		f="${rej%*.rej}"
 		if [ -e "$rej" ]; then
 			echo_checking_patch_and_reject "$f"
+			if check_for_diff_file "$f"; then
+				hint "Use 'rm -f $rej && git patch --continue' to remove the reject and continue"
+				echo "The conflict looks to be resolved!" >&2
+				exit 1
+			fi
+
 			echo "Remaining reject artifact $rej!" >&2
 			echo "Resolve the conflict first and remove the file then." >&2
 			hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
@@ -169,6 +175,12 @@ check_for_unpatched_files() {
 		rej="$f.rej"
 		if [ -e "$rej" ]; then
 			echo_checking_patch_and_reject "$f"
+			if check_for_diff_file "$f"; then
+				hint "Use 'rm -f $rej && git patch --continue' to remove the reject and continue"
+				echo "The conflict looks to be resolved!" >&2
+				exit 1
+			fi
+
 			echo "Remaining unpatched artifact $rej!" >&2
 			echo "Resolve the conflict first and remove the file then." >&2
 			hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
@@ -185,6 +197,12 @@ check_for_diff() {
 	status_patch_changes_only |
 	diff -ud --label "patch" --label "cached" --color \
 	     - <(status_cached_changes_only)
+}
+
+check_for_diff_file() {
+	status_patch_file_changes_only "$@" |
+	diff -ud --label "patch" --label "cached" --color \
+	     - <(status_cached_file_changes_only "$@")
 }
 
 add_patched_files_to_index() {
@@ -246,6 +264,17 @@ status_cached_changes_only() {
 	sed -e '/^\(@@\| \)/d'
 }
 
+status_cached_file() {
+	status_cached | \
+	sed -e "/^--- .\\+\\/${1//\//\\\/}/,/^\(--- .*\|\)$/{//d;/^+++/d;p}" \
+	    -n
+}
+
+status_cached_file_changes_only() {
+	status_cached_file "$@" | \
+	sed -e '/^\(@@\| \)/d'
+}
+
 status_patch() {
 	sed -e '1,/^diff/d' \
 	    -e '/^-- $/,$d' \
@@ -256,6 +285,17 @@ status_patch() {
 
 status_patch_changes_only() {
 	status_patch | \
+	sed -e '/^\(@@\| \)/d'
+}
+
+status_patch_file() {
+	status_patch | \
+	sed -e "/^--- .\\+\\/${1//\//\\\/}/,/^\(--- .*\|\)$/{//d;/^+++/d;p}" \
+	    -n
+}
+
+status_patch_file_changes_only() {
+	status_patch_file "$@" | \
 	sed -e '/^\(@@\| \)/d'
 }
 
