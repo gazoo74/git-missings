@@ -234,7 +234,7 @@ resolve_unpatched() {
 
 			# Try applying reject in a treeway merge...
 			if sed -e "s,$oldfile,$patchfile," "$rej" | \
-			   git apply "$@" - -3; then
+			   git apply - -3; then
 				git add "$patchfile"
 				rm -f "$rej"
 				break
@@ -242,7 +242,7 @@ resolve_unpatched() {
 
 			# Try applying and save rejects...
 			if sed -e "s,$oldfile,$patchfile," "$rej" | \
-			   git apply "$@" - --reject; then
+			   git apply - --reject; then
 				git add "$patchfile"
 				rm -f "$rej"
 				break
@@ -269,7 +269,7 @@ resolve_rejected() {
 
 		# Try applying reject in a treeway merge...
 		if sed -e "/^diff a/a--- a/$patchfile\n+++ b/$patchfile" "$rej" | \
-		   git apply "$@" - -3; then
+		   git apply - -3; then
 			git add "$patchfile"
 			rm -f "$rej"
 			break
@@ -277,7 +277,7 @@ resolve_rejected() {
 
 		# Try applying and save rejects...
 		if sed -e "/^diff a/a--- a/$patchfile\n+++ b/$patchfile" "$rej" | \
-		   git apply "$@" - --reject; then
+		   git apply - --reject; then
 			git add "$patchfile"
 			rm -f "$rej"
 			break
