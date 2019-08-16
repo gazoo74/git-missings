@@ -329,7 +329,8 @@ resolve_unpatched() {
 			fi
 
 			# New rejects found!
-			if [ -e "$patchfile.rej" ]; then
+			if [ "$patchfile.rej" != "$rej" ] &&
+			   [ -e "$patchfile.rej" ]; then
 				git add "$patchfile"
 				rm -f "$rej"
 				ln -sf "$(realpath "$patchfile.rej")" "$rej"
