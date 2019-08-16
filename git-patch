@@ -48,12 +48,12 @@ EOF
 
 extract_mailbox_header() {
 	sed -e '/^$/,$d' \
-	    "$1"
+	       "$1"
 }
 
 extract_mailbox_body() {
 	sed -e '1,/^$/d' \
-	    "$1"
+	       "$1"
 }
 
 extract_mailbox_info() {
@@ -73,8 +73,8 @@ extract_mailbox_author_script() {
 }
 
 extract_mailbox_subject() {
-	sed -n '/Subject: /s,Subject: ,,p' \
-	    "$1"
+	sed -e '/Subject: /s,Subject: ,,p' \
+	    -n "$1"
 }
 
 extract_mailbox_commit_message() {
@@ -84,14 +84,15 @@ extract_mailbox_commit_message() {
 
 extract_mailbox_patch() {
 	extract_mailbox_body "$1" | \
-	sed -n '/^---/,$p'
+	sed -e '/^---/,$p' \
+	    -n
 }
 
 extract_diff_commit_message() {
 	sed -e '/^diff /,$d' \
 	    -e '/^--- /,$d' \
 	    -e '/^+++ /,$d' \
-	    "$1"
+	       "$1"
 }
 
 sanitized_mailbox_subject() {
@@ -109,26 +110,26 @@ sanitized_diff_commit_message() {
 }
 
 index_to_filename() {
-	sed -n .git/patch-apply/todo \
-	    -e "$1p"
+	sed -e "$1p" \
+	    -n .git/patch-apply/todo
 }
 
 get_patched_files() {
 	# Applied patch path/to/file cleanly.
-	sed -n '/^Applied patch /s,Applied patch \(.*\) cleanly.$,\1,p' \
-	    .git/patch-apply/applying
+	sed -e '/^Applied patch /s,Applied patch \(.*\) cleanly.$,\1,p' \
+	    -n .git/patch-apply/applying
 }
 
 get_reject_files() {
 	# Applying patch path/to/file with x reject[s]...
-	sed -n '/Applying patch /s,Applying patch \(.*\) with [0-9]* rejects\?...$,\1.rej,p' \
-	    .git/patch-apply/applying
+	sed -e '/Applying patch /s,Applying patch \(.*\) with [0-9]* rejects\?...$,\1.rej,p' \
+	    -n .git/patch-apply/applying
 }
 
 get_unpatched_files() {
 	# error: path/to/file: does not [exist in|match] index
-	sed -n '/error: /s,^error: \(.*\): does not \(exist in\|match\) index$,\1,p' \
-	    .git/patch-apply/applying
+	sed -e '/error: /s,^error: \(.*\): does not \(exist in\|match\) index$,\1,p' \
+	    -n .git/patch-apply/applying
 }
 
 get_unpatched_rejects() {
@@ -145,8 +146,8 @@ get_all_artifacts_files() {
 
 echo_checking_patch_and_reject() {
 	echo "Checking patch $1"
-	sed -n .git/patch-apply/applying \
-	    -e "/^Checking patch ${1//\//\\/}/,/^\(Checking patch \|$\)/{//d;p}"
+	sed -e "/^Checking patch ${1//\//\\/}/,/^\(Checking patch \|$\)/{//d;p}" \
+	    -n .git/patch-apply/applying
 	cat "$1.rej"
 }
 
@@ -216,8 +217,8 @@ saving_unpatched_files_to_rej() {
 	get_unpatched_files | \
 	while read -r f; do
 		mkdir -p "${f%/*}"
-		sed -n "\:--- a/$f:,/--- a/p" \
-		    .git/patch-apply/patch \
+		sed -e "\:--- a/$f:,/--- a/p" \
+		    -n .git/patch-apply/patch \
 		    >"$f.rej"
 	done
 }
@@ -256,7 +257,9 @@ edit_commit() {
 }
 
 status_cached() {
-	git diff --cached | sed -e '/^diff /d' -e '/^index /d'
+	git diff --cached | \
+	sed -e '/^diff /d' \
+	    -e '/^index /d'
 }
 
 status_cached_changes_only() {
@@ -280,7 +283,7 @@ status_patch() {
 	    -e '/^-- $/,$d' \
 	    -e '/^diff /d' \
 	    -e '/^index /d' \
-	    .git/patch-apply/patch
+	       .git/patch-apply/patch
 }
 
 status_patch_changes_only() {
