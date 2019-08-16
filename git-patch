@@ -143,10 +143,18 @@ get_all_artifacts_files() {
 	get_unpatched_rejects
 }
 
+echo_checking_patch_and_reject() {
+	echo "Checking patch $1"
+	sed -n .git/patch-apply/applying \
+	    -e "/^Checking patch ${1//\//\\/}/,/^\(Checking patch \|$\)/{//d;p}"
+	cat "$1.rej"
+}
+
 check_for_rej_files() {
 	get_reject_files | \
 	while read -r rej; do
 		if [ -e "$rej" ]; then
+			echo_checking_patch_and_reject "$rej"
 			echo "Remaining reject artifact $rej!" >&2
 			echo "Resolve the conflict first and remove the file then." >&2
 			hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
@@ -158,6 +166,7 @@ check_for_unpatched_files() {
 	get_unpatched_files | \
 	while read -r f; do
 		if [ -e "$f.rej" ]; then
+			echo_checking_patch_and_reject "$f"
 			echo "Remaining unpatched artifact $f.rej!" >&2
 			echo "Resolve the conflict first and remove the file then." >&2
 			hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
