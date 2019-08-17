@@ -114,6 +114,12 @@ index_to_filename() {
 	    -n .git/patch-apply/todo
 }
 
+get_new_files() {
+	# error: path/to/file: already exists in working directory
+	sed -e '/error: /s,^error: \(.*\): already exists in working directory$,\1,p' \
+	    -n .git/patch-apply/applying
+}
+
 get_patched_files() {
 	# Applied patch path/to/file cleanly.
 	sed -e '/^Applied patch /s,Applied patch \(.*\) cleanly.$,\1,p' \
@@ -139,7 +145,15 @@ get_unpatched_rejects() {
 	done
 }
 
+get_new_files_rejects() {
+	get_new_files | \
+	while read -r f; do
+		echo "$f.rej"
+	done
+}
+
 get_all_artifacts_files() {
+	get_new_files
 	get_reject_files
 	get_unpatched_rejects
 }
@@ -149,6 +163,15 @@ echo_checking_patch_and_reject() {
 	sed -e "/^Checking patch ${1//\//\\/}/,/^\(Checking patch \|$\)/{//d;p}" \
 	    -n .git/patch-apply/applying
 	cat "$1.rej"
+}
+
+check_for_new_files() {
+	get_new_files | \
+	while read -r f; do
+		if ! git status --porcelain "$f" | grep -q "^A  $f"; then
+			hint_and_exit "Use 'git add \"$f\"' to update index"
+		fi
+	done
 }
 
 check_for_rej_files() {
@@ -192,6 +215,7 @@ check_for_unpatched_files() {
 check_for_artifacts() {
 	check_for_rej_files
 	check_for_unpatched_files
+	check_for_new_files
 }
 
 check_for_diff() {
@@ -204,6 +228,13 @@ check_for_diff_file() {
 	status_patch_file_changes_only "$@" |
 	diff -ud --label "patch" --label "cached" --color \
 	     - <(status_cached_file_changes_only "$@")
+}
+
+add_new_files_to_index() {
+	get_new_files | \
+	while read -r f; do
+		git add "$f"
+	done
 }
 
 add_patched_files_to_index() {
@@ -259,7 +290,8 @@ edit_commit() {
 status_cached() {
 	git diff --cached | \
 	sed -e '/^diff /d' \
-	    -e '/^index /d'
+	    -e '/^index /d' \
+	    -e '/^new file mode /d'
 }
 
 status_cached_changes_only() {
@@ -283,6 +315,7 @@ status_patch() {
 	    -e '/^-- $/,$d' \
 	    -e '/^diff /d' \
 	    -e '/^index /d' \
+	    -e '/^new file mode /d' \
 	       .git/patch-apply/patch
 }
 
@@ -441,6 +474,7 @@ EOF
 	fi
 
 	# Neither am nor apply succeed
+	add_new_files_to_index
 	add_patched_files_to_index
 	saving_unpatched_files_to_rej
 
