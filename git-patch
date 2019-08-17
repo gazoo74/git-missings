@@ -244,6 +244,13 @@ add_patched_files_to_index() {
 	done
 }
 
+add_unpatched_files_to_index() {
+	get_unpatched_files | \
+	while read -r f; do
+		git add "$f"
+	done
+}
+
 saving_unpatched_files_to_rej() {
 	get_unpatched_files | \
 	while read -r f; do
@@ -476,6 +483,7 @@ EOF
 	# Neither am nor apply succeed
 	add_new_files_to_index
 	add_patched_files_to_index
+	add_unpatched_files_to_index
 	saving_unpatched_files_to_rej
 
 	# Try to auto-resolve
