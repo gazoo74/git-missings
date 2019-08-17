@@ -188,7 +188,10 @@ check_for_rej_files() {
 
 			echo "Remaining reject artifact $rej!" >&2
 			echo "Resolve the conflict first and remove the file then." >&2
-			hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
+			if ! git status --porcelain "$f" | grep -q "^M  $f"; then
+				hint_and_exit "Use 'git add \"$f\"' to update index"
+			fi
+			hint_and_exit "Use '$(git config --get diff.tool || echo vimdiff) \"$f\" \"$rej\"' to apply the chunks manually"
 		fi
 	done
 }
@@ -207,7 +210,10 @@ check_for_unpatched_files() {
 
 			echo "Remaining unpatched artifact $rej!" >&2
 			echo "Resolve the conflict first and remove the file then." >&2
-			hint_and_exit "Use 'git patch --show-current-patch' to see the failed patch"
+			if ! git status --porcelain "$f" | grep -q "^M  $f"; then
+				hint_and_exit "Use 'git add \"$f\"' to update index"
+			fi
+			hint_and_exit "Use '$(git config --get diff.tool || echo vimdiff) \"$f\" \"$rej\"' to apply the chunks manually"
 		fi
 	done
 }
