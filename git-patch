@@ -260,7 +260,9 @@ add_unpatched_files_to_index() {
 saving_unpatched_files_to_rej() {
 	get_unpatched_files | \
 	while read -r f; do
-		mkdir -p "${f%/*}"
+		if [ "$f" != "${f%/*}" ]; then
+			mkdir -p "${f%/*}"
+		fi
 		sed -e "\:--- a/$f:,/--- a/p" \
 		    -n .git/patch-apply/patch \
 		    >"$f.rej"
