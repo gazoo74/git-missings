@@ -513,7 +513,9 @@ action_continue() {
 	$QUIET || echo "Applying: $(head -n1 .git/patch-apply/final-commit)"
 	check_for_artifacts
 	if ! check_for_diff; then
+		hint "Use 'git patch --status' to see the differences side-by-side"
 		echo "Warning: changes are not rigorously identical!" >&2
+		exit 1
 	fi
 
 	edit_commit
@@ -542,9 +544,9 @@ action_quit() {
 }
 
 action_status() {
-	status_patch |
-	diff -ud --label "patch" --label "cached" --color \
-	     - <(status_cached) || true
+	git diff --cached |
+	diff --side-by-side --label "patch" --label "cached" --color \
+	     .git/patch-apply/patch - || true
 }
 
 action_resolve() {
