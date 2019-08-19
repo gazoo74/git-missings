@@ -544,9 +544,16 @@ action_quit() {
 }
 
 action_status() {
+	if [ -z "$GIT_PAGER" ]; then
+		GIT_PAGER="$PAGER"
+	fi
+	if [ -z "$GIT_PAGER" ]; then
+		GIT_PAGER="less"
+	fi
+
 	git diff --cached |
 	diff --side-by-side --label "patch" --label "cached" --color=always \
-	     .git/patch-apply/patch - | LESS="FRX" LV="-c" less
+	     .git/patch-apply/patch - | LESS="${LESS:-FRX}" LV="${LV:--c}" "$GIT_PAGER"
 }
 
 action_resolve() {
