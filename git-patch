@@ -545,8 +545,8 @@ action_quit() {
 
 action_status() {
 	git diff --cached |
-	diff --side-by-side --label "patch" --label "cached" --color \
-	     .git/patch-apply/patch - || true
+	diff --side-by-side --label "patch" --label "cached" --color=always \
+	     .git/patch-apply/patch - | LESS="FRX" LV="-c" less
 }
 
 action_resolve() {
