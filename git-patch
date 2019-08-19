@@ -545,7 +545,7 @@ action_quit() {
 
 action_status() {
 	if [ -z "$GIT_PAGER" ]; then
-		GIT_PAGER="$PAGER"
+		GIT_PAGER="$(git config --get core.pager || echo "$PAGER")"
 	fi
 	if [ -z "$GIT_PAGER" ]; then
 		GIT_PAGER="less"
