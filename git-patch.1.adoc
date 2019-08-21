@@ -15,7 +15,7 @@ git-patch - Apply a series of patches
 *git-patch* [--autoresolve] [--signoff] [--keep] [--no-utf8] [--3way] [--quiet]
 [--scissors] [(<mbox> | <unified>)...]
 
-*git-patch* (--continue | --skip | --abort | --status | --resolve |
+*git-patch* (--continue | --skip | --abort | --status | --resolve | --resolved |
 --show-current-patch)
 
 == DESCRIPTION
@@ -77,7 +77,7 @@ leave the rejected hunks in corresponding *.rej files.
     Skip the current patch. This is only meaningful when restarting an aborted
     patch.
 
---continue::
+--continue, --resolved::
     After a patch failure (e.g. attempting to apply conflicting patch), the user
     has applied it by hand and the index file stores the result of the
     application. Make a commit using the authorship and commit log extracted
