@@ -368,12 +368,22 @@ EOF
 	git commit $COMMITOPTS --file "$gitpatchdir/final-commit" "$@"
 }
 
+push_to_series() {
+	local filename
+	local index
+
+	index="$(printf "%04i" "$next")"
+	filename="$(index_to_filename "$index")"
+	git log -1 --pretty="format:%H $filename%n" >>"$gitpatchdir/series"
+}
+
 edit_commit() {
 	if [ -t 0 ]; then
 		set -- --edit "$@"
 	fi
 
 	commit "$@"
+	push_to_series
 }
 
 status_cached() {
@@ -563,6 +573,7 @@ patch() {
 	# Try to apply mailbox first
 	# shellcheck disable=SC2086
 	if git am $AMOPTS "$1"; then
+		push_to_series
 		return
 	fi
 
@@ -607,6 +618,7 @@ EOF
 	if git apply $APPLYOPTS "$1" 2>&1 | \
 	   tee "$gitpatchdir/applying" >&2; then
 		commit
+		push_to_series
 		return
 	fi
 
@@ -619,6 +631,7 @@ EOF
 	# Try to auto-resolve
 	if $AUTORESOLVE && autoresolve; then
 		edit_commit
+		push_to_series
 		return
 	fi
 
@@ -948,5 +961,10 @@ while [ "$next" -le "$last" ]; do
 	patch "$gitpatchdir/$patch"
 	next
 done
+
+cat "$gitdir/patch-apply/series"
+while read hash patchfile; do
+	echo "git format-patch -1 \"$hash\" --stdout >\"$patchfile\""
+done <"$gitdir/patch-apply/series"
 
 rm -rf "$gitdir/patch-apply"
