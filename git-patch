@@ -682,6 +682,12 @@ action_resolve() {
 	autoresolve
 
 	check_for_artifacts
+	if ! check_for_diff; then
+		if ! prompt_yes_no "Warning: changes are not rigorously identical, keep going" "[No/yes]"; then
+			hint "Use 'git patch --status' to see the differences side-by-side or 'git patch --resolved' if resolved"
+			exit 1
+		fi
+	fi
 
 	resolved
 }
