@@ -917,9 +917,6 @@ abort|quit|status|resolved|show-current-patch)
 	"action_$ACTION"
 	exit
 	;;
-*)
-	fatal "$ACTION: Invalid action!"
-	;;
 esac
 
 while [ "$next" -le "$last" ]; do
