@@ -453,7 +453,7 @@ resolve_unpatched() {
 		   git apply - -3; then
 			git add "$patchfile"
 			rm -f "$rej"
-			break
+			continue
 		fi
 
 		# Try applying and save rejects...
@@ -461,7 +461,7 @@ resolve_unpatched() {
 		   git apply - --reject; then
 			git add "$patchfile"
 			rm -f "$rej"
-			break
+			continue
 		fi
 
 		# New rejects found!
@@ -483,7 +483,7 @@ resolve_unpatched() {
 				readlink "$rej" | xargs rm -f
 			fi
 			rm -f "$rej"
-			break
+			continue
 		fi
 
 		return 1
@@ -502,7 +502,7 @@ resolve_rejected() {
 		   git apply - -3; then
 			git add "$patchfile"
 			rm -f "$rej"
-			break
+			continue
 		fi
 
 		# Try applying and save rejects...
@@ -510,7 +510,7 @@ resolve_rejected() {
 		   git apply - --reject; then
 			git add "$patchfile"
 			rm -f "$rej"
-			break
+			continue
 		fi
 
 		# Manually merge
@@ -524,7 +524,7 @@ resolve_rejected() {
 				readlink "$rej" | xargs rm -f
 			fi
 			rm -f "$rej"
-			break
+			continue
 		fi
 
 		return 1
