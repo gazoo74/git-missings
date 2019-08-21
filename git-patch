@@ -294,7 +294,7 @@ check_for_diff() {
 
 check_for_diff_file() {
 	status_patch_file_changes_only "$@" |
-	diff -ud --label "patch" --label "cached" --color \
+	diff -ud --label "a/$1" --label "b/$1" --color \
 	     - <(status_cached_file_changes_only "$@")
 }
 
