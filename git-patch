@@ -325,7 +325,8 @@ saving_unpatched_files_to_rej() {
 		if [ "$f" != "${f%/*}" ]; then
 			mkdir -p "${f%/*}"
 		fi
-		sed -e "\:--- a/$f:,/--- a/p" \
+		sed -e "/--- .*.\\+\\/${f//\//\\\/}/,/^\(diff .*\|\)$/{//d;/^+++/d;/^index /d;p}" \
+		    -e "1i--- a/$f\n+++ b/$f" \
 		    -n "$gitpatchdir/patch" \
 		    >"$f.rej"
 	done
