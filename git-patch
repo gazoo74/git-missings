@@ -542,8 +542,6 @@ autoresolve() {
 	   ! resolve_unpatched; then
 		return 1
 	fi
-
-	return 0
 }
 
 patch() {
