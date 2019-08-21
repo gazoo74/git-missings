@@ -680,6 +680,9 @@ action_resolve() {
 
 	$QUIET || echo "Applying: $(head -n1 "$gitpatchdir/final-commit")"
 	autoresolve
+
+	check_for_artifacts
+
 	resolved
 }
 
