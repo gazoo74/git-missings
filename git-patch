@@ -910,10 +910,10 @@ fi
 
 # Second form (--continue | --skip | --abort | --quit | --status | --resolve | --show-current-patch)
 case "$ACTION" in
-continue|skip|resolve)
+continue|skip|resolve|resolved)
 	"action_$ACTION"
 	;;
-abort|quit|status|resolved|show-current-patch)
+abort|quit|status|show-current-patch)
 	"action_$ACTION"
 	exit
 	;;
