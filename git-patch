@@ -474,11 +474,17 @@ resolve_unpatched() {
 
 		# Manually merge
 		if [ -t 0 ] && diff_tool "$rej" "$patchfile"; then
+			git add "$patchfile"
+
+			echo_checking_patch_and_reject "$patchfile"
+			if check_for_diff_file "$patchfile"; then
+				echo "The conflict looks to be resolved!" >&2
+			fi
+
 			if ! prompt_yes_no "Does conflicts are successfully merged" "[No/yes]"; then
 				return 1
 			fi
 
-			git add "$patchfile"
 			if [ -L "$rej" ]; then
 				readlink "$rej" | xargs rm -f
 			fi
@@ -515,11 +521,17 @@ resolve_rejected() {
 
 		# Manually merge
 		if [ -t 0 ] && diff_tool "$rej" "$patchfile"; then
+			git add "$patchfile"
+
+			echo_checking_patch_and_reject "$patchfile"
+			if check_for_diff_file "$patchfile"; then
+				echo "The conflict looks to be resolved!" >&2
+			fi
+
 			if ! prompt_yes_no "Does conflicts are successfully merged" "[No/yes]"; then
 				return 1
 			fi
 
-			git add "$patchfile"
 			if [ -L "$rej" ]; then
 				readlink "$rej" | xargs rm -f
 			fi
