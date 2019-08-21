@@ -673,6 +673,7 @@ action_status() {
 
 action_resolve() {
 	autoresolve
+	resolved
 }
 
 action_resolved() {
@@ -882,10 +883,10 @@ fi
 
 # Second form (--continue | --skip | --abort | --quit | --status | --resolve | --show-current-patch)
 case "$ACTION" in
-continue|skip)
+continue|skip|resolve)
 	"action_$ACTION"
 	;;
-abort|quit|status|resolve|resolved|show-current-patch)
+abort|quit|status|resolved|show-current-patch)
 	"action_$ACTION"
 	exit
 	;;
