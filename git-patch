@@ -443,47 +443,48 @@ resolve_unpatched() {
 				echo "Error: $patchfile: No such file!" >&2
 				continue
 			fi
-
-			# Try applying reject in a treeway merge...
-			if sed -e "s,$oldfile,$patchfile," "$rej" | \
-			   git apply - -3; then
-				git add "$patchfile"
-				rm -f "$rej"
-				break
-			fi
-
-			# Try applying and save rejects...
-			if sed -e "s,$oldfile,$patchfile," "$rej" | \
-			   git apply - --reject; then
-				git add "$patchfile"
-				rm -f "$rej"
-				break
-			fi
-
-			# New rejects found!
-			if [ "$patchfile.rej" != "$rej" ] &&
-			   [ -e "$patchfile.rej" ]; then
-				git add "$patchfile"
-				rm -f "$rej"
-				ln -sf "$(realpath "$patchfile.rej")" "$rej"
-			fi
-
-			# Manually merge
-			if [ -t 0 ] && diff_tool "$rej" "$patchfile"; then
-				if ! prompt_yes_no "Does conflicts are successfully merged" "[No/yes]"; then
-					return 1
-				fi
-
-				git add "$patchfile"
-				if [ -L "$rej" ]; then
-					readlink "$rej" | xargs rm -f
-				fi
-				rm -f "$rej"
-				break
-			fi
-
-			return 1
+			break
 		done
+
+		# Try applying reject in a treeway merge...
+		if sed -e "s,$oldfile,$patchfile," "$rej" | \
+		   git apply - -3; then
+			git add "$patchfile"
+			rm -f "$rej"
+			break
+		fi
+
+		# Try applying and save rejects...
+		if sed -e "s,$oldfile,$patchfile," "$rej" | \
+		   git apply - --reject; then
+			git add "$patchfile"
+			rm -f "$rej"
+			break
+		fi
+
+		# New rejects found!
+		if [ "$patchfile.rej" != "$rej" ] &&
+		   [ -e "$patchfile.rej" ]; then
+			git add "$patchfile"
+			rm -f "$rej"
+			ln -sf "$(realpath "$patchfile.rej")" "$rej"
+		fi
+
+		# Manually merge
+		if [ -t 0 ] && diff_tool "$rej" "$patchfile"; then
+			if ! prompt_yes_no "Does conflicts are successfully merged" "[No/yes]"; then
+				return 1
+			fi
+
+			git add "$patchfile"
+			if [ -L "$rej" ]; then
+				readlink "$rej" | xargs rm -f
+			fi
+			rm -f "$rej"
+			break
+		fi
+
+		return 1
 	done
 }
 
