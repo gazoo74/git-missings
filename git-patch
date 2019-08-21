@@ -678,7 +678,7 @@ action_status() {
 	fi
 
 	git diff --cached |
-	diff --side-by-side --label "patch" --label "cached" --color=always \
+	diff --side-by-side --color=always \
 	     "$gitpatchdir/patch" - | LESS="${LESS:-FRX}" LV="${LV:--c}" "$GIT_PAGER"
 }
 
