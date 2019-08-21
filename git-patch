@@ -672,6 +672,13 @@ action_status() {
 }
 
 action_resolve() {
+	# No patch in progress... keep going
+	if [ ! -f "$gitpatchdir/patch" ]; then
+		fatal "No apply in progress?"
+		return
+	fi
+
+	$QUIET || echo "Applying: $(head -n1 "$gitpatchdir/final-commit")"
 	autoresolve
 	resolved
 }
